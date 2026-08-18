@@ -16,8 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
+from django.contrib.auth import logout as auth_logout
+
+def admin_logout_redirect(request):
+    auth_logout(request)
+    return redirect('/')
 
 urlpatterns = [
+    path('admin/logout/', admin_logout_redirect),
     path('admin/', admin.site.urls),
     path('', include('core.urls')), # This connects to the core app
 ]

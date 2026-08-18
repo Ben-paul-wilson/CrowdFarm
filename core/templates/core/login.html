@@ -3,9 +3,11 @@
 
 {% block title %}Log In — CrowdFarm{% endblock %}
 
+{% block global_messages %}{% endblock %}
+
 {% block content %}
 <div class="d-flex" style="min-height: calc(100vh - 56px);">
-	
+
 	<!-- Left brand panel (desktop only) -->
 	<div class="d-none d-lg-flex flex-column justify-content-between p-5 text-white" style="width: 45%; background: linear-gradient(145deg, #1a6b3c 0%, #0d4a28 60%, #072d18 100%);
 		        position: relative; overflow: hidden;">
@@ -86,6 +88,7 @@
 			<form method="post" action="{% url 'login' %}" class="needs-validation" novalidate id="loginForm">
 				{% csrf_token %}
 				<input type="hidden" name="next" value="{{ next }}">
+
 
 				<div class="mb-3">
 					<label class="form-label fw-semibold" for="loginEmail">Email address</label>

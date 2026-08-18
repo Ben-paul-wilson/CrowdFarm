@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}System Admin Dashboard — CrowdFarm{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="fw-bold">System Administrator Dashboard</h2>
+            <p class="text-muted">Welcome back, {{ user.get_full_name|default:user.email }}!</p>
+            
+            <div class="card mt-4 border-primary border-opacity-25 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="ph-database text-primary fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1 fw-bold">Database & Platform Management</h5>
+                            <p class="card-text text-muted mb-0">Access the core Django admin panel to manage users, database tables, and system configurations.</p>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <a href="{% url 'admin:index' %}" class="btn btn-primary fw-semibold">
+                        <i class="ph-gear me-2"></i> Open Django Admin Panel
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card mt-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">System Metrics</h5>
+                    <p class="card-text">This is a blank page placeholder for the Admin Dashboard. Analytics and reports can be added here later.</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

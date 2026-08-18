@@ -35,14 +35,14 @@
 					</li>
 					{% if user.is_authenticated and user.role == 'FARMER' %}
 					<li class="nav-item">
-						<a href="{% url 'assets:farmer_dashboard' %}" class="nav-link">
+						<a href="{% url 'farmer_dashboard' %}" class="nav-link">
 							<i class="ph-layout me-1"></i> My Dashboard
 						</a>
 					</li>
 					{% endif %}
 					{% if user.is_authenticated and user.role in 'AGENT,ADMIN' %}
 					<li class="nav-item">
-						<a href="{% url 'assets:agent_dashboard' %}" class="nav-link">
+						<a href="{% url 'agent_dashboard' %}" class="nav-link">
 							<i class="ph-shield-check me-1"></i> Agent Dashboard
 						</a>
 					</li>
@@ -97,16 +97,18 @@
 		</div>
 	</div>
 
+	{% block global_messages %}
 	{% if messages %}
-	<div class="container-fluid mt-2">
+	<div class="container-fluid">
 		{% for message in messages %}
-		<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+		<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show mt-2" role="alert">
 			{{ message }}
 			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 		</div>
 		{% endfor %}
 	</div>
 	{% endif %}
+	{% endblock %}
 
 	{% block content %}{% endblock %}
 

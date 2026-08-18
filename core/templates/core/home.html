@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home — CrowdFarm{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="py-5" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 70vh; display: flex; align-items: center;">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <div class="badge bg-success bg-opacity-10 text-success mb-3 px-3 py-2 rounded-pill fw-semibold">
+                    <i class="ph-leaf me-1"></i> Revolutionizing Agriculture
+                </div>
+                <h1 class="display-4 fw-bold lh-sm mb-4 text-dark">
+                    Empowering Farmers,<br>
+                    <span class="text-success">Rewarding Investors.</span>
+                </h1>
+                <p class="lead text-muted mb-5 pe-lg-5">
+                    CrowdFarm connects verified farmers with investors to fund real agricultural assets. Grow your wealth while supporting national food security and sustainable farming.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'register' %}" class="btn btn-success btn-lg px-5 fw-semibold shadow-sm">
+                            Get Started
+                        </a>
+                        <a href="{% url 'login' %}" class="btn btn-outline-dark btn-lg px-4 fw-semibold">
+                            Login
+                        </a>
+                    {% else %}
+                        {% if user.role == 'ADMIN' %}
+                            <a href="{% url 'admin_dashboard' %}" class="btn btn-success btn-lg px-5 fw-semibold shadow-sm">
+                                Go to Dashboard
+                            </a>
+                        {% elif user.role == 'FARMER' %}
+                            <a href="{% url 'farmer_dashboard' %}" class="btn btn-success btn-lg px-5 fw-semibold shadow-sm">
+                                Go to Dashboard
+                            </a>
+                        {% elif user.role == 'AGENT' %}
+                            <a href="{% url 'agent_dashboard' %}" class="btn btn-success btn-lg px-5 fw-semibold shadow-sm">
+                                Go to Dashboard
+                            </a>
+                        {% elif user.role == 'INVESTOR' %}
+                            <a href="{% url 'investor_dashboard' %}" class="btn btn-success btn-lg px-5 fw-semibold shadow-sm">
+                                Go to Dashboard
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-lg-6 text-center">
+                <!-- Decorative Graphic -->
+                <div class="position-relative d-inline-block mx-auto" style="width: 100%; max-width: 500px;">
+                    <div class="rounded-circle bg-success opacity-25 position-absolute" style="width: 300px; height: 300px; top: -20px; right: 0; filter: blur(60px); z-index: 0;"></div>
+                    <div class="rounded-circle bg-primary opacity-25 position-absolute" style="width: 250px; height: 250px; bottom: -20px; left: 20px; filter: blur(60px); z-index: 0;"></div>
+                    
+                    <div class="card border-0 shadow-lg position-relative rounded-4 overflow-hidden" style="z-index: 1;">
+                        <div class="card-body p-5 bg-white text-center">
+                            <i class="ph-plant text-success mb-3" style="font-size: 5rem;"></i>
+                            <h3 class="fw-bold">Invest in Real Assets</h3>
+                            <p class="text-muted">Direct investment in verified farmland, cattle, and crops with guaranteed returns.</p>
+                            <div class="d-flex justify-content-center gap-2 mt-4">
+                                <span class="badge bg-light text-dark border px-3 py-2">🌾 Crops</span>
+                                <span class="badge bg-light text-dark border px-3 py-2">🐄 Cattle</span>
+                                <span class="badge bg-light text-dark border px-3 py-2">🚜 Equipment</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5 my-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">How CrowdFarm Works</h2>
+        <p class="text-muted">A secure and transparent platform for everyone</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                        <i class="ph-shield-check text-success fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold">Agent Verified</h5>
+                    <p class="text-muted mb-0">Every asset and farmer is physically verified by our on-ground agents for maximum security.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                        <i class="ph-chart-line-up text-primary fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold">Transparent Returns</h5>
+                    <p class="text-muted mb-0">Track your investment growth in real-time with automated profit distribution straight to your wallet.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                        <i class="ph-handshake text-warning fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold">Direct Connection</h5>
+                    <p class="text-muted mb-0">Cut out the middlemen. Your funds go directly to the farmers who need them to scale their operations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
