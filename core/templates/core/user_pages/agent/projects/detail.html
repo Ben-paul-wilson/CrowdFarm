@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.title }} — Agent View — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <a href="{% url 'agent_assigned_projects' %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="ph-arrow-left me-1"></i> Back to My Projects
+  </a>
+
+  <!-- Status Pipeline -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <h3 class="fw-bold mb-1">{{ project.title }}</h3>
+          <p class="text-muted mb-0"><i class="ph-user me-1"></i>{{ project.asset.farmer.user.get_full_name }}
+            · <i class="ph-map-pin me-1"></i>{{ project.asset.district }}, {{ project.asset.state }}</p>
+        </div>
+        <span class="badge fs-6 {% if project.status == 'COMPLETED' %}bg-secondary{% elif project.status == 'REJECTED' %}bg-danger{% elif project.status == 'FUNDING' %}bg-success{% else %}bg-primary{% endif %}">
+          {{ project.get_status_display }}
+        </span>
+      </div>
+      <p class="mt-3">{{ project.description }}</p>
+
+      <!-- Funding bar -->
+      <div class="mt-3">
+        <div class="d-flex justify-content-between mb-1">
+          <small class="text-muted">Funding Progress</small>
+          <small class="fw-semibold">₹{{ funded|floatformat:0 }} / ₹{{ project.funding_required|floatformat:0 }} ({{ pct }}%)</small>
+        </div>
+        <div class="progress" style="height:8px;">
+          <div class="progress-bar bg-success" style="width:{{ pct }}%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Action Panel -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Actions</h6>
+        </div>
+        <div class="list-group list-group-flush">
+          {% if can_verify %}
+          <a href="{% url 'agent_verify' project.id %}" class="list-group-item list-group-item-action text-primary">
+            <i class="ph-shield-check me-2"></i> Submit Verification
+          </a>
+          {% endif %}
+          {% if can_valuate %}
+          <a href="{% url 'agent_valuate' project.id %}" class="list-group-item list-group-item-action text-warning">
+            <i class="ph-tag me-2"></i> Submit Valuation
+          </a>
+          {% endif %}
+          {% if project.status == 'FUNDED' %}
+          <form method="post" action="{% url 'agent_update_project_status' project.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="IN_PROGRESS">
+            <button type="submit" class="list-group-item list-group-item-action text-info border-0 w-100 text-start">
+              <i class="ph-play-circle me-2"></i> Mark as In Progress
+            </button>
+          </form>
+          {% endif %}
+          {% if project.status == 'IN_PROGRESS' %}
+          <form method="post" action="{% url 'agent_update_project_status' project.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="READY_FOR_SALE">
+            <button type="submit" class="list-group-item list-group-item-action text-success border-0 w-100 text-start">
+              <i class="ph-storefront me-2"></i> Mark Ready for Sale
+            </button>
+          </form>
+          {% endif %}
+          {% if can_sell %}
+          <a href="{% url 'agent_record_sale' project.id %}" class="list-group-item list-group-item-action text-success fw-semibold">
+            <i class="ph-receipt me-2"></i> Record Sale & Distribute
+          </a>
+          {% endif %}
+          {% if has_sale %}
+          <div class="list-group-item text-muted"><i class="ph-check-circle me-2 text-success"></i> Sale Recorded</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Investors -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Investors ({{ investments|length }})</h6>
+        </div>
+        {% if investments %}
+        <div class="list-group list-group-flush">
+          {% for inv in investments %}
+          <div class="list-group-item px-4 py-2">
+            <div class="d-flex justify-content-between">
+              <span class="small fw-semibold">{{ inv.investor.user.get_full_name|default:"Investor" }}</span>
+              <span class="text-success small fw-bold">₹{{ inv.amount|floatformat:0 }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="card-body text-muted small">No investors yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="col-md-8">
+      <!-- Documents -->
+      {% if docs %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Ownership Documents</h6>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for doc in docs %}
+          <a href="{{ doc.document.url }}" target="_blank" class="list-group-item list-group-item-action px-4 py-2">
+            <i class="ph-file-text me-2 text-primary"></i>{{ doc.document_type }}
+            <small class="text-muted ms-2">{{ doc.uploaded_at|date:"d M Y" }}</small>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Verifications -->
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Verification Reports</h6>
+        </div>
+        <div class="card-body">
+          {% if verifications %}
+          {% for v in verifications %}
+          <div class="border rounded-3 p-3 mb-2">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold">{{ v.agent.user.get_full_name }}</span>
+              <span class="badge {% if v.decision == 'APPROVED' %}bg-success{% elif v.decision == 'REJECTED' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ v.get_decision_display }}</span>
+            </div>
+            <div class="text-muted small mt-1">
+              Ownership ✓: {% if v.ownership_verified %}✅{% else %}❌{% endif %} &nbsp;
+              Physical ✓: {% if v.physical_verified %}✅{% else %}❌{% endif %} &nbsp;
+              Inspection: {{ v.inspection_date|date:"d M Y" }}
+            </div>
+            {% if v.remarks %}<p class="text-muted small mb-0 mt-1">{{ v.remarks }}</p>{% endif %}
+          </div>
+          {% endfor %}
+          {% else %}
+          <p class="text-muted mb-0">No verification submitted yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Valuations -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Valuation Reports</h6>
+        </div>
+        <div class="card-body">
+          {% if valuations %}
+          {% for v in valuations %}
+          <div class="border rounded-3 p-3 mb-2">
+            <div class="row text-center">
+              <div class="col">
+                <div class="fw-bold text-success">₹{{ v.estimated_market_value|floatformat:0 }}</div>
+                <div class="text-muted small">Market Value</div>
+              </div>
+              {% if v.estimated_profit %}
+              <div class="col">
+                <div class="fw-bold text-primary">₹{{ v.estimated_profit|floatformat:0 }}</div>
+                <div class="text-muted small">Est. Profit</div>
+              </div>
+              {% endif %}
+              {% if v.estimated_sale_date %}
+              <div class="col">
+                <div class="fw-bold">{{ v.estimated_sale_date }}</div>
+                <div class="text-muted small">Sale Date</div>
+              </div>
+              {% endif %}
+            </div>
+            {% if v.notes %}<p class="text-muted small mt-2 mb-0">{{ v.notes }}</p>{% endif %}
+          </div>
+          {% endfor %}
+          {% else %}
+          <p class="text-muted mb-0">No valuation submitted yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

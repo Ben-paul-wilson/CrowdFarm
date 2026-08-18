@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Submit Project — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:760px;">
+  <a href="{% url 'farmer_project_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="ph-arrow-left me-1"></i> Back to Projects
+  </a>
+  <h2 class="fw-bold mb-1">Submit a New Project</h2>
+  <p class="text-muted mb-4">Fill in the details and upload ownership documents to start the verification process.</p>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <form method="post" action="{% url 'farmer_project_create' %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <h6 class="fw-bold text-uppercase text-muted small mb-3">Project Information</h6>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="projectAsset">Select Asset *</label>
+          <select id="projectAsset" name="asset" class="form-select" required>
+            <option value="">— Choose an asset —</option>
+            {% for asset in assets %}
+            <option value="{{ asset.id }}" {% if post.asset == asset.id|stringformat:"s" or request.GET.asset == asset.id|stringformat:"s" %}selected{% endif %}>
+              {{ asset.name }} ({{ asset.get_asset_type_display }}, {{ asset.district }})
+            </option>
+            {% endfor %}
+          </select>
+          {% if not assets %}
+          <div class="form-text text-danger">You need to <a href="{% url 'farmer_asset_create' %}">add an asset</a> first before submitting a project.</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="projTitle">Project Title *</label>
+          <input type="text" id="projTitle" name="title" class="form-control"
+            placeholder="e.g. Rabi Wheat Crop 2025" value="{{ post.title|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Project Type *</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="project_type" id="typeCrop" value="CROP"
+                {% if post.project_type == 'CROP' or not post %}checked{% endif %} required>
+              <label class="form-check-label" for="typeCrop">🌾 Crop</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="project_type" id="typeCattle" value="CATTLE"
+                {% if post.project_type == 'CATTLE' %}checked{% endif %}>
+              <label class="form-check-label" for="typeCattle">🐄 Cattle</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="projDesc">Description *</label>
+          <textarea id="projDesc" name="description" class="form-control" rows="4"
+            placeholder="Describe your project — crop variety, season, expected yield, etc." required>{{ post.description|default:'' }}</textarea>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="fundingReq">Funding Required (₹) *</label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input type="number" id="fundingReq" name="funding_required" class="form-control"
+                min="1000" step="100" value="{{ post.funding_required|default:'' }}" required>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold" for="maxInv">Max Investors</label>
+            <input type="number" id="maxInv" name="max_investors" class="form-control"
+              min="1" max="10" value="{{ post.max_investors|default:'3' }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold" for="saleDate">Expected Sale Date</label>
+            <input type="date" id="saleDate" name="expected_sale_date" class="form-control"
+              value="{{ post.expected_sale_date|default:'' }}">
+          </div>
+        </div>
+
+        <hr class="my-4">
+        <h6 class="fw-bold text-uppercase text-muted small mb-3">Ownership Documents</h6>
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="docType">Document Type</label>
+          <input type="text" id="docType" name="document_type" class="form-control"
+            placeholder="e.g. Land Registry, Patta, Kisan Credit Card" value="{{ post.document_type|default:'Ownership Proof' }}">
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="docFiles">Upload Documents</label>
+          <input type="file" id="docFiles" name="documents" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png">
+          <div class="form-text text-muted">You can upload multiple files (PDF, JPG, PNG). Max 10MB each.</div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold" {% if not assets %}disabled{% endif %}>
+          <i class="ph-paper-plane-tilt me-2"></i> Submit for Verification
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

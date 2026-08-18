@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Record Sale — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:720px;">
+  <a href="{% url 'agent_project_detail' project.id %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="ph-arrow-left me-1"></i> Back to Project
+  </a>
+  <h2 class="fw-bold mb-1">Record Sale & Distribute Profits</h2>
+  <p class="text-muted mb-4">Record the sale for <strong>{{ project.title }}</strong> and automatically distribute profits to all parties.</p>
+
+  {% if investments %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 py-3">
+      <h6 class="fw-bold mb-0">Active Investors ({{ investments|length }})</h6>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light"><tr><th class="ps-3">Investor</th><th>Amount</th><th>Share %</th></tr></thead>
+        <tbody>
+          {% for inv in investments %}
+          <tr>
+            <td class="ps-3 small">{{ inv.investor.user.get_full_name|default:"Investor" }}</td>
+            <td class="small">₹{{ inv.amount|floatformat:0 }}</td>
+            <td class="small">{{ inv.share_percentage }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <form method="post" action="{% url 'agent_record_sale' project.id %}">
+        {% csrf_token %}
+
+        <h6 class="fw-bold text-uppercase text-muted small mb-3">Sale Details</h6>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="saleDate">Sale Date *</label>
+            <input type="date" id="saleDate" name="sale_date" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="grossAmount">Gross Sale Amount (₹) *</label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input type="number" id="grossAmount" name="gross_sale_amount" class="form-control" min="0" step="100" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="expenses">Expenses (₹)</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" id="expenses" name="expenses" class="form-control" min="0" step="100" value="0">
+          </div>
+          <div class="form-text text-muted">Transport, harvesting, broker fees, etc.</div>
+        </div>
+
+        <hr>
+        <h6 class="fw-bold text-uppercase text-muted small mb-3">Profit Distribution Split (%)</h6>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="farmerPct">🌾 Farmer Share</label>
+            <div class="input-group">
+              <input type="number" id="farmerPct" name="farmer_pct" class="form-control" value="60" min="0" max="100">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="investorPct">📈 Investor Share</label>
+            <div class="input-group">
+              <input type="number" id="investorPct" name="investor_pct" class="form-control" value="30" min="0" max="100">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="companyPct">🏢 Company Share</label>
+            <div class="input-group">
+              <input type="number" id="companyPct" name="company_pct" class="form-control" value="10" min="0" max="100">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-text text-muted mb-3">Shares are applied to the <strong>net amount</strong> (Gross − Expenses). Must sum to 100%.</div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="saleRemarks">Remarks</label>
+          <textarea id="saleRemarks" name="remarks" class="form-control" rows="3"
+            placeholder="Buyer details, sale conditions, notes..."></textarea>
+        </div>
+
+        <div class="alert alert-warning py-2">
+          <i class="ph-warning me-1"></i>
+          <strong>This action is irreversible.</strong> Profits will be immediately distributed to all wallets and the project will be marked as Completed.
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold">
+          <i class="ph-paper-plane-tilt me-2"></i> Confirm Sale & Distribute Profits
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

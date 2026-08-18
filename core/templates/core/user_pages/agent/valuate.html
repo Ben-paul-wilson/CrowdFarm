@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Submit Valuation — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:640px;">
+  <a href="{% url 'agent_project_detail' project.id %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="ph-arrow-left me-1"></i> Back to Project
+  </a>
+  <h2 class="fw-bold mb-1">Submit Valuation</h2>
+  <p class="text-muted mb-4">Estimate the market value for <strong>{{ project.title }}</strong>. This will open the project for funding.</p>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <form method="post" action="{% url 'agent_valuate' project.id %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="marketVal">Estimated Market Value (₹) *</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" id="marketVal" name="estimated_market_value" class="form-control"
+              min="1000" step="100" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="estProfit">Estimated Profit (₹)</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" id="estProfit" name="estimated_profit" class="form-control" min="0" step="100">
+          </div>
+          <div class="form-text text-muted">Expected profit after sale (optional).</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="saleDate">Estimated Sale Date</label>
+          <input type="date" id="saleDate" name="estimated_sale_date" class="form-control">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="notes">Notes</label>
+          <textarea id="notes" name="notes" class="form-control" rows="4"
+            placeholder="Methodology, comparables, market conditions..."></textarea>
+        </div>
+
+        <div class="alert alert-info py-2">
+          <i class="ph-info me-1"></i>
+          Submitting a valuation will automatically move this project to <strong>Funding</strong> status,
+          making it visible to investors.
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-warning flex-fill fw-semibold text-dark">
+            <i class="ph-tag me-2"></i> Submit Valuation
+          </button>
+          <a href="{% url 'agent_project_detail' project.id %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

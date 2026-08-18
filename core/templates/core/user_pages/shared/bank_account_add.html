@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Add Bank Account — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:560px;">
+  <a href="{% url 'bank_accounts' %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="ph-arrow-left me-1"></i> Back to Accounts
+  </a>
+  <h2 class="fw-bold mb-1">Add Bank Account</h2>
+  <p class="text-muted mb-4">Your account details are encrypted and used only for earnings withdrawals.</p>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <form method="post" action="{% url 'bank_account_add' %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="holderName">Account Holder Name *</label>
+          <input type="text" id="holderName" name="account_holder_name" class="form-control"
+            placeholder="As printed on your cheque book" value="{{ post.account_holder_name|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="bankName">Bank Name *</label>
+          <input type="text" id="bankName" name="bank_name" class="form-control"
+            placeholder="e.g. State Bank of India" value="{{ post.bank_name|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="accNum">Account Number *</label>
+          <input type="text" id="accNum" name="account_number" class="form-control"
+            placeholder="Your bank account number" value="{{ post.account_number|default:'' }}" required>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="ifsc">IFSC Code *</label>
+            <input type="text" id="ifsc" name="ifsc_code" class="form-control"
+              placeholder="e.g. SBIN0001234" maxlength="11" value="{{ post.ifsc_code|default:'' }}" required style="text-transform:uppercase;">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="branch">Branch Name</label>
+            <input type="text" id="branch" name="branch_name" class="form-control"
+              placeholder="e.g. Mumbai Main" value="{{ post.branch_name|default:'' }}">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="isPrimary" name="is_primary" checked>
+            <label class="form-check-label fw-semibold" for="isPrimary">Set as primary account</label>
+          </div>
+          <div class="form-text text-muted">Earnings will be transferred to your primary account.</div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold">
+          <i class="ph-bank me-2"></i> Save Bank Account
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

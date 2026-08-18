@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}{{ asset.name }} — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <a href="{% url 'farmer_asset_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="ph-arrow-left me-1"></i> Back to Assets
+  </a>
+
+  <div class="row g-4">
+    <div class="col-md-5">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <span class="badge {% if asset.asset_type == 'LAND' %}bg-success{% else %}bg-warning text-dark{% endif %} mb-3">
+            {{ asset.get_asset_type_display }}
+          </span>
+          <h3 class="fw-bold">{{ asset.name }}</h3>
+          <p class="text-muted"><i class="ph-map-pin me-1"></i>{{ asset.address }}</p>
+          <hr>
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <div class="fw-bold">{{ asset.district }}</div>
+              <div class="text-muted small">District</div>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold">{{ asset.state }}</div>
+              <div class="text-muted small">State</div>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold">{{ asset.pincode }}</div>
+              <div class="text-muted small">Pincode</div>
+            </div>
+          </div>
+          {% if asset.description %}
+          <hr>
+          <p class="text-muted small">{{ asset.description }}</p>
+          {% endif %}
+          <hr>
+          <a href="{% url 'farmer_project_create' %}?asset={{ asset.id }}" class="btn btn-success w-100">
+            <i class="ph-plus me-1"></i> Submit Project for this Asset
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Projects linked to this asset</h6>
+        </div>
+        <div class="card-body p-0">
+          {% if projects %}
+          <div class="list-group list-group-flush">
+            {% for p in projects %}
+            <a href="{% url 'farmer_project_detail' p.id %}" class="list-group-item list-group-item-action px-4 py-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold">{{ p.title }}</div>
+                  <div class="text-muted small">{{ p.get_project_type_display }} · ₹{{ p.funding_required|floatformat:0 }} required</div>
+                </div>
+                <span class="badge
+                  {% if p.status == 'FUNDING' %}bg-success
+                  {% elif p.status == 'COMPLETED' %}bg-secondary
+                  {% elif p.status == 'REJECTED' %}bg-danger
+                  {% else %}bg-primary{% endif %}">
+                  {{ p.get_status_display }}
+                </span>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="ph-leaf fs-1 d-block mb-2"></i>
+            No projects yet for this asset.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

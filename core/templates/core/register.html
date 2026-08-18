@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Account — CrowdFarm{% endblock %}
+{% block global_messages %}{% endblock %}
+
+{% block content %}
+<div style="display:flex; min-height: calc(100vh - 56px);">
+
+	<!-- Left brand panel (hidden on mobile) -->
+	<div class="d-none d-lg-flex flex-column justify-content-between p-5 text-white flex-shrink-0"
+		style="width: 40%; background: linear-gradient(145deg, #1a6b3c 0%, #0d4a28 60%, #072d18 100%); position: relative; overflow: hidden;">
+		<div style="position:absolute;width:500px;height:500px;border-radius:50%;background:rgba(255,255,255,0.04);top:-120px;right:-160px;"></div>
+		<div style="position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-60px;left:-80px;"></div>
+		<div class="position-relative">
+			<span class="fs-3 fw-bold">🌾 CrowdFarm</span>
+			<p class="mt-1 text-white-50 small mb-0">Agricultural Investment Marketplace</p>
+		</div>
+		<div class="position-relative">
+			<h2 class="fw-bold lh-base mb-3" style="font-size: 1.8rem;">Join the farming revolution.</h2>
+			<p class="text-white-50 mb-4">Register as a Farmer, Investor, or Agent and start your journey on India's most trusted agricultural crowdfunding platform.</p>
+			<div class="d-flex flex-column gap-3">
+				<div class="d-flex align-items-center gap-3">
+					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+						style="width:36px;height:36px;background:rgba(255,255,255,0.15);">
+						<i class="ph-leaf text-white"></i>
+					</div>
+					<span class="small">Farmers — list assets &amp; raise funding</span>
+				</div>
+				<div class="d-flex align-items-center gap-3">
+					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+						style="width:36px;height:36px;background:rgba(255,255,255,0.15);">
+						<i class="ph-chart-line-up text-white"></i>
+					</div>
+					<span class="small">Investors — fund projects &amp; earn returns</span>
+				</div>
+				<div class="d-flex align-items-center gap-3">
+					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+						style="width:36px;height:36px;background:rgba(255,255,255,0.15);">
+						<i class="ph-shield-check text-white"></i>
+					</div>
+					<span class="small">Agents — verify and manage projects</span>
+				</div>
+			</div>
+		</div>
+		<div class="position-relative">
+			<p class="text-white-50 small mb-0">&copy; {% now "Y" %} CrowdFarm. All rights reserved.</p>
+		</div>
+	</div>
+
+	<!-- Right form panel — scrollable independently -->
+	<div style="flex:1; overflow-y:auto; background:#fff;">
+		<div class="d-flex flex-column align-items-center p-4 p-sm-5">
+			<div style="width: 100%; max-width: 520px;">
+
+				<div class="d-lg-none text-center mb-4">
+					<span class="fs-4 fw-bold text-success">🌾 CrowdFarm</span>
+				</div>
+
+				{% if messages %}
+				{% for message in messages %}
+				<div class="alert alert-{{ message.tags|default:'danger' }} alert-dismissible fade show py-2" role="alert">
+					{{ message }}
+					<button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+				</div>
+				{% endfor %}
+				{% endif %}
+
+				<div class="mb-4">
+					<h4 class="fw-bold mb-1">Create your account</h4>
+					<p class="text-muted mb-0">Fill in the details below to get started</p>
+				</div>
+
+				<form method="post" action="{% url 'register' %}" id="registerForm" novalidate>
+					{% csrf_token %}
+
+					<!-- ── Role Selector ── -->
+					<div class="mb-4">
+						<label class="form-label fw-semibold">I want to join as</label>
+						<div class="d-flex gap-2" id="roleCards">
+							<label class="role-card flex-fill text-center border rounded-3 p-3 {% if post.role == 'FARMER' %}border-success bg-success bg-opacity-10{% endif %}"
+								for="role_FARMER" style="cursor:pointer; transition: all 0.15s;">
+								<input type="radio" name="role" id="role_FARMER" value="FARMER" class="d-none role-radio"
+									{% if post.role == 'FARMER' or not post.role %}checked{% endif %} required>
+								<i class="ph-leaf d-block mb-1 text-success" style="font-size:1.8rem;"></i>
+								<span class="fw-semibold small d-block">Farmer</span>
+							</label>
+
+							<label class="role-card flex-fill text-center border rounded-3 p-3 {% if post.role == 'INVESTOR' %}border-success bg-success bg-opacity-10{% endif %}"
+								for="role_INVESTOR" style="cursor:pointer; transition: all 0.15s;">
+								<input type="radio" name="role" id="role_INVESTOR" value="INVESTOR" class="d-none role-radio"
+									{% if post.role == 'INVESTOR' %}checked{% endif %}>
+								<i class="ph-chart-line-up d-block mb-1 text-success" style="font-size:1.8rem;"></i>
+								<span class="fw-semibold small d-block">Investor</span>
+							</label>
+
+							<label class="role-card flex-fill text-center border rounded-3 p-3 {% if post.role == 'AGENT' %}border-success bg-success bg-opacity-10{% endif %}"
+								for="role_AGENT" style="cursor:pointer; transition: all 0.15s;">
+								<input type="radio" name="role" id="role_AGENT" value="AGENT" class="d-none role-radio"
+									{% if post.role == 'AGENT' %}checked{% endif %}>
+								<i class="ph-shield-check d-block mb-1 text-success" style="font-size:1.8rem;"></i>
+								<span class="fw-semibold small d-block">Agent</span>
+							</label>
+						</div>
+					</div>
+
+					<!-- ── Name ── -->
+					<div class="row g-3 mb-3">
+						<div class="col-6">
+							<label class="form-label fw-semibold" for="firstName">First Name *</label>
+							<input type="text" id="firstName" name="first_name" class="form-control"
+								value="{{ post.first_name|default:'' }}" required>
+						</div>
+						<div class="col-6">
+							<label class="form-label fw-semibold" for="lastName">Last Name *</label>
+							<input type="text" id="lastName" name="last_name" class="form-control"
+								value="{{ post.last_name|default:'' }}" required>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label fw-semibold" for="regEmail">Email address *</label>
+						<input type="email" id="regEmail" name="email" class="form-control"
+							placeholder="you@example.com" value="{{ post.email|default:'' }}" required>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label fw-semibold" for="regPhone">Phone Number *</label>
+						<input type="tel" id="regPhone" name="phone" class="form-control"
+							placeholder="10-digit mobile number" value="{{ post.phone|default:'' }}" required>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label fw-semibold" for="aadhaar">Aadhaar Number *</label>
+						<input type="text" id="aadhaar" name="aadhaar_number" class="form-control"
+							placeholder="12-digit Aadhaar" maxlength="12" value="{{ post.aadhaar_number|default:'' }}" required>
+						<div class="form-text text-muted">Used for identity verification only. Not publicly visible.</div>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label fw-semibold" for="regAddress">Address</label>
+						<textarea id="regAddress" name="address" class="form-control" rows="2"
+							placeholder="Your full address">{{ post.address|default:'' }}</textarea>
+					</div>
+
+					<!-- ── Agent-only fields ── -->
+					<div id="agentFields" style="display:none;">
+						<div class="border-top pt-3 mt-1 mb-3">
+							<p class="text-muted fw-semibold small mb-3" style="text-transform:uppercase; letter-spacing:.05em;">Agent Credentials</p>
+							<div class="mb-3">
+								<label class="form-label fw-semibold" for="employeeId">Employee ID *</label>
+								<input type="text" id="employeeId" name="employee_id" class="form-control"
+									value="{{ post.employee_id|default:'' }}">
+							</div>
+							<div class="mb-3">
+								<label class="form-label fw-semibold" for="designation">Designation *</label>
+								<input type="text" id="designation" name="designation" class="form-control"
+									placeholder="e.g. Field Verification Officer" value="{{ post.designation|default:'' }}">
+							</div>
+						</div>
+					</div>
+
+					<!-- ── Password ── -->
+					<div class="row g-3 mb-4">
+						<div class="col-6">
+							<label class="form-label fw-semibold" for="regPassword">Password *</label>
+							<input type="password" id="regPassword" name="password" class="form-control"
+								placeholder="Min 8 characters" required>
+						</div>
+						<div class="col-6">
+							<label class="form-label fw-semibold" for="confirmPassword">Confirm Password *</label>
+							<input type="password" id="confirmPassword" name="confirm_password" class="form-control"
+								placeholder="Repeat password" required>
+						</div>
+					</div>
+
+					<button type="submit" class="btn btn-success btn-lg w-100 fw-semibold mb-3">
+						<i class="ph-user-circle-plus me-2"></i> Create Account
+					</button>
+
+					<p class="text-center text-muted small mb-0">
+						Already have an account? <a href="{% url 'login' %}" class="text-success fw-semibold">Sign in</a>
+					</p>
+				</form>
+
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<script>
+(function () {
+	// Role card toggle
+	const cards = document.querySelectorAll('.role-card');
+	const agentFields = document.getElementById('agentFields');
+	const employeeId  = document.getElementById('employeeId');
+	const designation = document.getElementById('designation');
+
+	function selectCard(card) {
+		cards.forEach(c => {
+			c.classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+			c.style.boxShadow = '';
+		});
+		card.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+		card.style.boxShadow = '0 0 0 3px rgba(25,135,84,.15)';
+
+		const radio = card.querySelector('.role-radio');
+		radio.checked = true;
+
+		const isAgent = (radio.value === 'AGENT');
+		agentFields.style.display = isAgent ? 'block' : 'none';
+		employeeId.required  = isAgent;
+		designation.required = isAgent;
+	}
+
+	cards.forEach(card => {
+		card.addEventListener('click', () => selectCard(card));
+	});
+
+	// Initialise on page load
+	const checked = document.querySelector('.role-radio:checked');
+	if (checked) {
+		const parentCard = checked.closest('.role-card');
+		if (parentCard) selectCard(parentCard);
+	}
+})();
+</script>
+
+{% endblock %}

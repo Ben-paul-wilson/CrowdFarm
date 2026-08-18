@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.title }} — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <a href="{% url 'farmer_project_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="ph-arrow-left me-1"></i> Back to Projects
+  </a>
+
+  <div class="row g-4">
+    <!-- Left: Project Info -->
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <span class="badge bg-secondary me-2">{{ project.get_project_type_display }}</span>
+              {% if project.status == 'FUNDING' %}<span class="badge bg-success">Funding Open</span>
+              {% elif project.status == 'COMPLETED' %}<span class="badge bg-secondary">Completed</span>
+              {% elif project.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
+              {% elif project.status == 'PENDING' %}<span class="badge bg-warning text-dark">Pending Review</span>
+              {% elif project.status == 'VERIFICATION' %}<span class="badge bg-info">Under Verification</span>
+              {% elif project.status == 'APPROVED' %}<span class="badge bg-primary">Approved</span>
+              {% else %}<span class="badge bg-primary">{{ project.get_status_display }}</span>{% endif %}
+            </div>
+            <small class="text-muted">Submitted {{ project.created_at|date:"d M Y" }}</small>
+          </div>
+          <h3 class="fw-bold">{{ project.title }}</h3>
+          <p class="text-muted"><i class="ph-map-pin me-1"></i>{{ project.asset.name }} · {{ project.asset.district }}, {{ project.asset.state }}</p>
+          <p>{{ project.description }}</p>
+
+          {% if project.assigned_agent %}
+          <div class="alert alert-info py-2 mb-0">
+            <i class="ph-shield-check me-1"></i>
+            Agent Assigned: <strong>{{ project.assigned_agent.user.get_full_name|default:project.assigned_agent.user.email }}</strong>
+            ({{ project.assigned_agent.designation }})
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Ownership Documents -->
+      {% if ownership_docs %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Uploaded Documents</h6>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for doc in ownership_docs %}
+          <a href="{{ doc.document.url }}" target="_blank" class="list-group-item list-group-item-action px-4 py-2">
+            <i class="ph-file-text me-2 text-primary"></i> {{ doc.document_type }}
+            <small class="text-muted ms-2">{{ doc.uploaded_at|date:"d M Y" }}</small>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Verifications -->
+      {% if verifications %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Verification Reports</h6>
+        </div>
+        <div class="card-body">
+          {% for v in verifications %}
+          <div class="border rounded-3 p-3 mb-2">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold">{{ v.agent.user.get_full_name }}</span>
+              <span class="badge {% if v.decision == 'APPROVED' %}bg-success{% elif v.decision == 'REJECTED' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                {{ v.get_decision_display }}
+              </span>
+            </div>
+            <div class="text-muted small mt-1">
+              Ownership Verified: {% if v.ownership_verified %}✅{% else %}❌{% endif %} &nbsp;
+              Physical Verified: {% if v.physical_verified %}✅{% else %}❌{% endif %}
+            </div>
+            {% if v.remarks %}<p class="text-muted small mt-1 mb-0">{{ v.remarks }}</p>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Valuations -->
+      {% if valuations %}
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Valuation Reports</h6>
+        </div>
+        <div class="card-body">
+          {% for v in valuations %}
+          <div class="border rounded-3 p-3 mb-2">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold">Estimated Market Value</span>
+              <span class="fw-bold text-success">₹{{ v.estimated_market_value|floatformat:0 }}</span>
+            </div>
+            {% if v.estimated_profit %}
+            <div class="text-muted small">Estimated Profit: ₹{{ v.estimated_profit|floatformat:0 }}</div>
+            {% endif %}
+            {% if v.notes %}<p class="text-muted small mt-1 mb-0">{{ v.notes }}</p>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right: Funding Status -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Funding Status</h6>
+          <div class="text-center mb-3">
+            <div class="fs-2 fw-bold text-success">₹{{ total_funded|floatformat:0 }}</div>
+            <div class="text-muted small">of ₹{{ project.funding_required|floatformat:0 }} raised</div>
+          </div>
+          <div class="progress mb-2" style="height:10px;">
+            <div class="progress-bar bg-success" style="width:{{ funding_pct }}%"></div>
+          </div>
+          <div class="d-flex justify-content-between text-muted small mb-3">
+            <span>{{ funding_pct }}% funded</span>
+            <span>{{ investments.count }} investor{{ investments.count|pluralize }}</span>
+          </div>
+          {% if project.expected_sale_date %}
+          <div class="text-muted small"><i class="ph-calendar me-1"></i> Expected sale: {{ project.expected_sale_date }}</div>
+          {% endif %}
+          {% if project.evaluated_value %}
+          <div class="text-muted small"><i class="ph-tag me-1"></i> Evaluated value: ₹{{ project.evaluated_value|floatformat:0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if investments %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Investors</h6>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for inv in investments %}
+          <div class="list-group-item px-4 py-2">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold small">{{ inv.investor.user.get_full_name|default:"Investor" }}</span>
+              <span class="text-success small fw-bold">₹{{ inv.amount|floatformat:0 }}</span>
+            </div>
+            <div class="text-muted" style="font-size:0.75rem;">{{ inv.share_percentage }}% share</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

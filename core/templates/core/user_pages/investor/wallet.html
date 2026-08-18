@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}My Wallet — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:900px;">
+  <h2 class="fw-bold mb-4">My Wallet</h2>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-5">
+      <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg,#1a4b8c,#0d2d5e); color:white;">
+        <div class="card-body p-4">
+          <div class="text-white-50 small mb-1">Available Balance</div>
+          <div style="font-size:2.5rem;" class="fw-bold">₹{{ wallet.balance|floatformat:2 }}</div>
+          <div class="text-white-50 small mt-2">Last updated: {{ wallet.updated_at|date:"d M Y, h:i A" }}</div>
+        </div>
+      </div>
+
+      <!-- Top Up Form -->
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Add Funds to Wallet</h6>
+          <form method="post" action="{% url 'investor_wallet' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold" for="topupAmount">Amount (₹)</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" id="topupAmount" name="amount" class="form-control"
+                  min="500" step="500" placeholder="e.g. 5000" required>
+              </div>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+              {% for amt in "1000,5000,10000,25000"|split:"," %}
+              <button type="button" class="btn btn-sm btn-outline-primary quick-amt"
+                data-amount="{{ amt }}">₹{{ amt }}</button>
+              {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary w-100 fw-semibold">
+              <i class="ph-plus me-2"></i> Add Funds
+            </button>
+            <p class="text-muted small text-center mt-2 mb-0">Simulated top-up for demo purposes.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="col-md-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">Transaction History</h6>
+        </div>
+        {% if transactions %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Date</th>
+                <th>Type</th>
+                <th class="text-end pe-3">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tx in transactions %}
+              <tr>
+                <td class="ps-3 text-muted small">{{ tx.created_at|date:"d M Y" }}</td>
+                <td>
+                  <div class="fw-semibold small">{{ tx.get_transaction_type_display }}</div>
+                  {% if tx.description %}<div class="text-muted" style="font-size:0.75rem;">{{ tx.description }}</div>{% endif %}
+                </td>
+                <td class="text-end pe-3 fw-bold
+                  {% if tx.transaction_type in 'INVESTMENT,WITHDRAWAL' %}text-danger{% else %}text-success{% endif %}">
+                  {% if tx.transaction_type in 'INVESTMENT,WITHDRAWAL' %}-{% else %}+{% endif %}₹{{ tx.amount|floatformat:2 }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted card-body">
+          <i class="ph-wallet fs-1 d-block mb-2"></i>No transactions yet.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.quick-amt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('topupAmount').value = btn.dataset.amount;
+  });
+});
+</script>
+{% endblock %}

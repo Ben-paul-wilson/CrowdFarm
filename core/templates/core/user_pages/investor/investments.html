@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}My Investments — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">My Investments</h2>
+    <a href="{% url 'investor_browse' %}" class="btn btn-success fw-semibold">
+      <i class="ph-plus me-1"></i> Browse New Projects
+    </a>
+  </div>
+
+  {% if investments %}
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Project</th>
+            <th>Farmer</th>
+            <th>Invested</th>
+            <th>Share %</th>
+            <th>Expected Return</th>
+            <th>Actual Return</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in investments %}
+          <tr>
+            <td class="ps-4">
+              <div class="fw-semibold">{{ inv.project.title }}</div>
+              <div class="text-muted" style="font-size:0.8rem;">{{ inv.project.get_status_display }}</div>
+            </td>
+            <td class="text-muted small">{{ inv.project.asset.farmer.user.get_full_name|default:"Farmer" }}</td>
+            <td class="fw-bold">₹{{ inv.amount|floatformat:0 }}</td>
+            <td>{{ inv.share_percentage }}%</td>
+            <td>{% if inv.expected_return %}₹{{ inv.expected_return|floatformat:0 }}{% else %}—{% endif %}</td>
+            <td>{% if inv.actual_return %}<span class="text-success fw-bold">₹{{ inv.actual_return|floatformat:0 }}</span>{% else %}—{% endif %}</td>
+            <td>
+              {% if inv.status == 'ACTIVE' %}<span class="badge bg-success">Active</span>
+              {% elif inv.status == 'RETURNED' %}<span class="badge bg-secondary">Returned</span>
+              {% else %}<span class="badge bg-danger">Cancelled</span>{% endif %}
+            </td>
+            <td class="text-muted small">{{ inv.invested_at|date:"d M Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="ph-currency-inr text-muted" style="font-size:4rem;"></i>
+    <h5 class="fw-semibold mt-3">No investments yet</h5>
+    <a href="{% url 'investor_browse' %}" class="btn btn-success mt-2">Browse Projects</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

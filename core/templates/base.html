@@ -22,15 +22,15 @@
 			</div>
 
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-				<span class="navbar-toggler-icon">P</span>
+				<span class="navbar-toggler-icon"></span>
 			</button>
 
 			<div class="collapse navbar-collapse" id="navbarMain">
 
 				<ul class="navbar-nav me-auto ms-3">
 					<li class="nav-item">
-						<a href="{% url 'home' %}" class="nav-link">
-							<i class="ph-leaf me-1"></i> Browse Assets
+						<a href="{% url 'investor_browse' %}" class="nav-link">
+							<i class="ph-leaf me-1"></i> Browse Projects
 						</a>
 					</li>
 					{% if user.is_authenticated and user.role == 'FARMER' %}
@@ -39,11 +39,45 @@
 							<i class="ph-layout me-1"></i> My Dashboard
 						</a>
 					</li>
+					<li class="nav-item">
+						<a href="{% url 'farmer_asset_list' %}" class="nav-link">
+							<i class="ph-leaf me-1"></i> My Assets
+						</a>
+					</li>
+					<li class="nav-item">
+						<a href="{% url 'farmer_project_list' %}" class="nav-link">
+							<i class="ph-leaf me-1"></i> My Projects
+						</a>
+					</li>
+					{% endif %}
+					{% if user.is_authenticated and user.role == 'INVESTOR' %}
+					<li class="nav-item">
+						<a href="{% url 'investor_dashboard' %}" class="nav-link">
+							<i class="ph-chart-line-up me-1"></i> Dashboard
+						</a>
+					</li>
+					<li class="nav-item">
+						<a href="{% url 'investor_investments' %}" class="nav-link">
+							<i class="ph-currency-inr me-1"></i> My Investments
+						</a>
+					</li>
 					{% endif %}
 					{% if user.is_authenticated and user.role in 'AGENT,ADMIN' %}
 					<li class="nav-item">
 						<a href="{% url 'agent_dashboard' %}" class="nav-link">
 							<i class="ph-shield-check me-1"></i> Agent Dashboard
+						</a>
+					</li>
+					<li class="nav-item">
+						<a href="{% url 'agent_pending_projects' %}" class="nav-link">
+							<i class="ph-clock me-1"></i> Pending Projects
+						</a>
+					</li>
+					{% endif %}
+					{% if user.is_authenticated and user.role == 'ADMIN' %}
+					<li class="nav-item">
+						<a href="{% url 'admin_dashboard' %}" class="nav-link">
+							<i class="ph-gauge me-1"></i> Admin
 						</a>
 					</li>
 					{% endif %}
@@ -64,13 +98,27 @@
 							</div>
 							<div class="dropdown-divider"></div>
 
-							{% if user.is_staff or user.role == 'ADMIN' %}
-							<a class="dropdown-item" href="{% url 'admin:index' %}">
-								<i class="ph-gear me-2"></i> Admin Panel
+							{% if user.role == 'FARMER' %}
+							<a class="dropdown-item" href="{% url 'farmer_wallet' %}">
+								<i class="ph-wallet me-2"></i> My Wallet
 							</a>
-							<div class="dropdown-divider"></div>
 							{% endif %}
+							{% if user.role == 'INVESTOR' %}
+							<a class="dropdown-item" href="{% url 'investor_wallet' %}">
+								<i class="ph-wallet me-2"></i> My Wallet
+							</a>
+							{% endif %}
+							<a class="dropdown-item" href="{% url 'bank_accounts' %}">
+								<i class="ph-bank me-2"></i> Bank Accounts
+							</a>
 
+							{% if user.is_staff or user.role == 'ADMIN' %}
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="{% url 'admin:index' %}">
+								<i class="ph-gear me-2"></i> Django Admin Panel
+							</a>
+							{% endif %}
+							<div class="dropdown-divider"></div>
 							<form method="post" action="{% url 'logout' %}" class="px-2">
 								{% csrf_token %}
 								<button type="submit" class="dropdown-item text-danger">

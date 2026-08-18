@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import logout as auth_logout
+from django.conf import settings
+from django.conf.urls.static import static
 
 def admin_logout_redirect(request):
     auth_logout(request)
@@ -26,5 +28,5 @@ def admin_logout_redirect(request):
 urlpatterns = [
     path('admin/logout/', admin_logout_redirect),
     path('admin/', admin.site.urls),
-    path('', include('core.urls')), # This connects to the core app
-]
+    path('', include('core.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

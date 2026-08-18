@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Pending Projects — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4" style="background:#f5f7fa; min-height:calc(100vh - 56px);">
+  <h2 class="fw-bold mb-1">Pending Projects</h2>
+  <p class="text-muted mb-4">Projects awaiting an agent to pick up and verify.</p>
+
+  {% if projects %}
+  <div class="row g-3">
+    {% for p in projects %}
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <span class="badge bg-warning text-dark mb-2">Pending Review</span>
+          <span class="badge bg-light text-dark mb-2 ms-1">{{ p.get_project_type_display }}</span>
+          <h5 class="fw-bold mb-1">{{ p.title }}</h5>
+          <p class="text-muted small mb-1"><i class="ph-user me-1"></i>{{ p.asset.farmer.user.get_full_name }}</p>
+          <p class="text-muted small mb-3"><i class="ph-map-pin me-1"></i>{{ p.asset.district }}, {{ p.asset.state }}</p>
+          <p class="text-muted small mb-3">{{ p.description|truncatewords:20 }}</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold text-success">₹{{ p.funding_required|floatformat:0 }}</div>
+              <div class="text-muted" style="font-size:0.75rem;">Funding Required</div>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="{% url 'agent_project_detail' p.id %}" class="btn btn-sm btn-outline-secondary">View</a>
+              <a href="{% url 'agent_assign_project' p.id %}" class="btn btn-sm btn-warning text-dark fw-semibold">
+                Assign to Me
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-white border-0 text-muted small py-2 px-4">
+          Submitted {{ p.created_at|date:"d M Y" }} · {{ p.ownership_documents.count }} document{{ p.ownership_documents.count|pluralize }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="ph-check-circle text-success" style="font-size:4rem;"></i>
+    <h5 class="fw-semibold mt-3">All caught up!</h5>
+    <p class="text-muted">No pending projects at the moment.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

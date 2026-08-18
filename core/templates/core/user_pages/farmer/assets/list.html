@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}My Assets — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4" style="background:#f5f7fa; min-height:calc(100vh - 56px);">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">My Assets</h2>
+      <p class="text-muted mb-0">Land and cattle registered under your account</p>
+    </div>
+    <a href="{% url 'farmer_asset_create' %}" class="btn btn-success fw-semibold">
+      <i class="ph-plus me-1"></i> Add Asset
+    </a>
+  </div>
+
+  {% if assets %}
+  <div class="row g-3">
+    {% for asset in assets %}
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between mb-3">
+            <div>
+              <span class="badge {% if asset.asset_type == 'LAND' %}bg-success{% else %}bg-warning text-dark{% endif %} mb-2">
+                {{ asset.get_asset_type_display }}
+              </span>
+              <h5 class="fw-bold mb-1">{{ asset.name }}</h5>
+              <p class="text-muted small mb-0"><i class="ph-map-pin me-1"></i>{{ asset.district }}, {{ asset.state }}</p>
+            </div>
+          </div>
+          {% if asset.description %}
+          <p class="text-muted small mb-3">{{ asset.description|truncatewords:15 }}</p>
+          {% endif %}
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="text-muted small">{{ asset.project_count }} project{{ asset.project_count|pluralize }}</span>
+            <a href="{% url 'farmer_asset_detail' asset.id %}" class="btn btn-sm btn-outline-success">View Details</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="ph-leaf text-muted" style="font-size:4rem;"></i>
+    <h5 class="fw-semibold mt-3">No assets yet</h5>
+    <p class="text-muted">Add your first land or cattle asset to get started.</p>
+    <a href="{% url 'farmer_asset_create' %}" class="btn btn-success">Add Your First Asset</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

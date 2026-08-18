@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}My Wallet — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:900px;">
+  <h2 class="fw-bold mb-4">My Wallet</h2>
+
+  <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg,#1a6b3c,#0d4a28); color:white;">
+    <div class="card-body p-4">
+      <div class="text-white-50 small mb-1">Available Balance</div>
+      <div style="font-size:2.5rem;" class="fw-bold">₹{{ wallet.balance|floatformat:2 }}</div>
+      <div class="text-white-50 small mt-2">Last updated: {{ wallet.updated_at|date:"d M Y, h:i A" }}</div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 py-3">
+      <h6 class="fw-bold mb-0">Transaction History</h6>
+    </div>
+    {% if transactions %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Date</th>
+            <th>Type</th>
+            <th>Project</th>
+            <th>Description</th>
+            <th class="text-end pe-4">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td class="ps-4 text-muted small">{{ tx.created_at|date:"d M Y" }}</td>
+            <td>
+              {% if tx.transaction_type == 'PROJECT_PROFIT' %}
+              <span class="badge bg-success">Profit</span>
+              {% elif tx.transaction_type == 'WITHDRAWAL' %}
+              <span class="badge bg-danger">Withdrawal</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ tx.get_transaction_type_display }}</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ tx.project.title|default:"—" }}</td>
+            <td class="text-muted small">{{ tx.description|default:"—" }}</td>
+            <td class="text-end pe-4 fw-bold
+              {% if tx.transaction_type == 'WITHDRAWAL' %}text-danger{% else %}text-success{% endif %}">
+              {% if tx.transaction_type == 'WITHDRAWAL' %}-{% else %}+{% endif %}₹{{ tx.amount|floatformat:2 }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="ph-wallet fs-1 d-block mb-2"></i>
+      No transactions yet.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

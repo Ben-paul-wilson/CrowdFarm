@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Add Asset — CrowdFarm{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 700px;">
+  <div class="mb-4">
+    <a href="{% url 'farmer_asset_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+      <i class="ph-arrow-left me-1"></i> Back to Assets
+    </a>
+    <h2 class="fw-bold">Add New Asset</h2>
+    <p class="text-muted">Register a farm or cattle asset that can be linked to investment projects.</p>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+      <form method="post" action="{% url 'farmer_asset_create' %}" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Asset Type *</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="asset_type" id="typeLand" value="LAND"
+                {% if post.asset_type == 'LAND' or not post %}checked{% endif %} required>
+              <label class="form-check-label" for="typeLand">🌾 Land / Farm</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="asset_type" id="typeCattle" value="CATTLE"
+                {% if post.asset_type == 'CATTLE' %}checked{% endif %}>
+              <label class="form-check-label" for="typeCattle">🐄 Cattle</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="assetName">Asset Name *</label>
+          <input type="text" id="assetName" name="name" class="form-control"
+            placeholder="e.g. North Field Farm, Girsing Cattle Lot" value="{{ post.name|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="assetDesc">Description</label>
+          <textarea id="assetDesc" name="description" class="form-control" rows="3"
+            placeholder="Describe your asset briefly">{{ post.description|default:'' }}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="assetAddress">Full Address *</label>
+          <textarea id="assetAddress" name="address" class="form-control" rows="2" required>{{ post.address|default:'' }}</textarea>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="district">District *</label>
+            <input type="text" id="district" name="district" class="form-control"
+              value="{{ post.district|default:'' }}" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="state">State *</label>
+            <input type="text" id="state" name="state" class="form-control"
+              value="{{ post.state|default:'' }}" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="pincode">Pincode *</label>
+            <input type="text" id="pincode" name="pincode" class="form-control" maxlength="6"
+              value="{{ post.pincode|default:'' }}" required>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="latitude">Latitude (optional)</label>
+            <input type="number" step="any" id="latitude" name="latitude" class="form-control"
+              value="{{ post.latitude|default:'' }}" placeholder="e.g. 18.520430">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="longitude">Longitude (optional)</label>
+            <input type="number" step="any" id="longitude" name="longitude" class="form-control"
+              value="{{ post.longitude|default:'' }}" placeholder="e.g. 73.856743">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold">
+          <i class="ph-check-circle me-2"></i> Save Asset
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

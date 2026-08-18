@@ -128,3 +128,11 @@ MAILERS = {
 
 
 AUTH_USER_MODEL = 'core.User'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR, 'core', 'templates')]
