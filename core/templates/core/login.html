@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Log In — CrowdFarm{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height: calc(100vh - 56px);">
+	
+	<!-- Left brand panel (desktop only) -->
+	<div class="d-none d-lg-flex flex-column justify-content-between p-5 text-white" style="width: 45%; background: linear-gradient(145deg, #1a6b3c 0%, #0d4a28 60%, #072d18 100%);
+		        position: relative; overflow: hidden;">
+
+		<div style="position:absolute;width:500px;height:500px;border-radius:50%;
+					background:rgba(255,255,255,0.04);top:-120px;right:-160px;"></div>
+		<div style="position:absolute;width:300px;height:300px;border-radius:50%;
+					background:rgba(255,255,255,0.05);bottom:-60px;left:-80px;"></div>
+
+		<div class="position-relative">
+			<span class="fs-3 fw-bold">🌾 CrowdFarm</span>
+			<p class="mt-1 text-white-50 small mb-0">Agricultural Investment Marketplace</p>
+		</div>
+
+		<div class="position-relative">
+			<h2 class="fw-bold lh-base mb-3" style="font-size: 2rem;">
+				Grow wealth.<br>Feed the nation.
+			</h2>
+			<p class="text-white-50 mb-5">
+				Connect directly with verified farmers, fund real agricultural
+				assets, and earn returns while supporting food security.
+			</p>
+
+			<div class="d-flex flex-column gap-3">
+				<div class="d-flex align-items-center gap-3">
+					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+						style="width:36px;height:36px;background:rgba(255,255,255,0.15);">
+						<i class="ph-shield-check text-white"></i>
+					</div>
+					<span class="small text-white-75">Agent-verified farm assets only</span>
+				</div>
+				<div class="d-flex align-items-center gap-3">
+					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+						style="width:36px;height:36px;background:rgba(255,255,255,0.15);">
+						<i class="ph-chart-line-up text-white"></i>
+					</div>
+					<span class="small text-white-75">Real-time investment tracking</span>
+				</div>
+				<div class="d-flex align-items-center gap-3">
+					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+						style="width:36px;height:36px;background:rgba(255,255,255,0.15);">
+						<i class="ph-users-three text-white"></i>
+					</div>
+					<span class="small text-white-75">Multi-role platform: Farmers, Investors, Agents</span>
+				</div>
+			</div>
+		</div>
+
+		<div class="position-relative">
+			<p class="text-white-50 small mb-0">&copy; {% now "Y" %} CrowdFarm. All rights reserved.</p>
+		</div>
+	</div>
+
+	<!-- Right form panel -->
+	<div class="d-flex flex-column justify-content-center align-items-center flex-fill p-4 p-sm-5 bg-white">
+		<div style="width: 100%; max-width: 400px;">
+
+			<!-- Mobile-only brand -->
+			<div class="d-lg-none text-center mb-4">
+				<span class="fs-4 fw-bold text-success">🌾 CrowdFarm</span>
+			</div>
+
+			<div class="mb-4">
+				<h4 class="fw-bold mb-1">Welcome back</h4>
+				<p class="text-muted mb-0">Sign in to your CrowdFarm account</p>
+			</div>
+
+			{% if messages %}
+			{% for message in messages %}
+			<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show py-2" role="alert">
+				<i class="ph-{% if message.tags == 'error' %}warning{% else %}check-circle{% endif %} me-2"></i>
+				{{ message }}
+				<button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+			</div>
+			{% endfor %}
+			{% endif %}
+
+			<form method="post" action="{% url 'login' %}" class="needs-validation" novalidate id="loginForm">
+				{% csrf_token %}
+				<input type="hidden" name="next" value="{{ next }}">
+
+				<div class="mb-3">
+					<label class="form-label fw-semibold" for="loginEmail">Email address</label>
+					<div class="form-control-feedback form-control-feedback-start">
+						<input type="email" id="loginEmail" name="email" class="form-control form-control-lg"
+							placeholder="you@example.com" value="{{ email|default:'' }}" autocomplete="email" required>
+						<div class="form-control-feedback-icon">
+							<i class="ph-envelope text-muted"></i>
+						</div>
+						<div class="invalid-feedback">Please enter a valid email address.</div>
+					</div>
+				</div>
+
+				<div class="mb-3">
+					<div class="d-flex justify-content-between mb-1">
+						<label class="form-label fw-semibold mb-0" for="loginPassword">Password</label>
+						<a href="#" class="small text-success">Forgot password?</a>
+					</div>
+					<div class="form-control-feedback form-control-feedback-start" style="position: relative;">
+						<input type="password" id="loginPassword" name="password" class="form-control form-control-lg"
+							placeholder="••••••••••" autocomplete="current-password" required
+							style="padding-right: 3rem;">
+						<div class="form-control-feedback-icon">
+							<i class="ph-lock text-muted"></i>
+						</div>
+						<button type="button" id="togglePassword" class="btn btn-sm btn-link text-muted p-0"
+							style="position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:5;">
+							<i class="ph-eye" id="toggleIcon" style="font-size:1.1rem;"></i>
+						</button>
+						<div class="invalid-feedback">Please enter your password.</div>
+					</div>
+				</div>
+
+				<div class="mb-4">
+					<div class="form-check">
+						<input type="checkbox" id="rememberMe" name="remember_me" class="form-check-input" value="1">
+						<label class="form-check-label text-muted small" for="rememberMe">
+							Keep me signed in for 2 weeks
+						</label>
+					</div>
+				</div>
+
+				<button type="submit" class="btn btn-success btn-lg w-100 fw-semibold mb-3" id="signInBtn">
+					<span id="btnText"><i class="ph-sign-in me-2"></i>Sign In</span>
+					<span id="btnSpinner" class="d-none">
+						<span class="spinner-border spinner-border-sm me-2"></span>Signing in…
+					</span>
+				</button>
+
+				<div class="text-center text-muted content-divider mb-3">
+					<span class="px-2 bg-white">New to CrowdFarm?</span>
+				</div>
+
+				<a href="{% url 'register' %}" class="btn btn-outline-secondary w-100">
+					<i class="ph-user-circle-plus me-2"></i>Create an account
+				</a>
+			</form>
+
+			<p class="text-center text-muted small mt-4 mb-0">
+				By signing in you agree to our
+				<a href="#" class="text-success">Terms &amp; Conditions</a> and
+				<a href="#" class="text-success">Privacy Policy</a>.
+			</p>
+
+		</div>
+	</div>
+
+</div>
+
+<script>
+	document.getElementById('togglePassword').addEventListener('click', function () {
+		const input = document.getElementById('loginPassword');
+		const icon = document.getElementById('toggleIcon');
+		const isHidden = input.type === 'password';
+		input.type = isHidden ? 'text' : 'password';
+		icon.classList.replace(isHidden ? 'ph-eye' : 'ph-eye-slash', isHidden ? 'ph-eye-slash' : 'ph-eye');
+	});
+
+	document.getElementById('loginForm').addEventListener('submit', function () {
+		if (this.checkValidity()) {
+			document.getElementById('btnText').classList.add('d-none');
+			document.getElementById('btnSpinner').classList.remove('d-none');
+			document.getElementById('signInBtn').disabled = true;
+		}
+		this.classList.add('was-validated');
+	});
+</script>
+{% endblock %}

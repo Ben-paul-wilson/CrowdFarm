@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title>{% block title %}CrowdFarm{% endblock %}</title>
+	{% include "includes/links.html" %}
+</head>
+
+<body>
+
+	<div class="navbar navbar-expand-lg navbar-dark navbar-static">
+		<div class="container-fluid">
+
+			<div class="navbar-brand">
+				<a href="{% url 'home' %}" class="d-inline-flex align-items-center">
+					<span class="text-white fw-bold fs-5">🌾 CrowdFarm</span>
+				</a>
+			</div>
+
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+				<span class="navbar-toggler-icon">P</span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="navbarMain">
+
+				<ul class="navbar-nav me-auto ms-3">
+					<li class="nav-item">
+						<a href="{% url 'home' %}" class="nav-link">
+							<i class="ph-leaf me-1"></i> Browse Assets
+						</a>
+					</li>
+					{% if user.is_authenticated and user.role == 'FARMER' %}
+					<li class="nav-item">
+						<a href="{% url 'assets:farmer_dashboard' %}" class="nav-link">
+							<i class="ph-layout me-1"></i> My Dashboard
+						</a>
+					</li>
+					{% endif %}
+					{% if user.is_authenticated and user.role in 'AGENT,ADMIN' %}
+					<li class="nav-item">
+						<a href="{% url 'assets:agent_dashboard' %}" class="nav-link">
+							<i class="ph-shield-check me-1"></i> Agent Dashboard
+						</a>
+					</li>
+					{% endif %}
+				</ul>
+
+				<ul class="navbar-nav ms-auto">
+					{% if user.is_authenticated %}
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle d-flex align-items-center" href="#"
+							data-bs-toggle="dropdown">
+							<i class="ph-user-circle me-2 fs-5"></i>
+							<span>{{ user.get_full_name|default:user.email }}</span>
+						</a>
+						<div class="dropdown-menu dropdown-menu-end">
+							<div class="dropdown-header">
+								<span class="fw-semibold">{{ user.email }}</span><br>
+								<small class="text-muted text-uppercase">{{ user.role }}</small>
+							</div>
+							<div class="dropdown-divider"></div>
+
+							{% if user.is_staff or user.role == 'ADMIN' %}
+							<a class="dropdown-item" href="{% url 'admin:index' %}">
+								<i class="ph-gear me-2"></i> Admin Panel
+							</a>
+							<div class="dropdown-divider"></div>
+							{% endif %}
+
+							<form method="post" action="{% url 'logout' %}" class="px-2">
+								{% csrf_token %}
+								<button type="submit" class="dropdown-item text-danger">
+									<i class="ph-sign-out me-2"></i> Logout
+								</button>
+							</form>
+						</div>
+					</li>
+					{% else %}
+					<li class="nav-item">
+						<a href="{% url 'register' %}" class="nav-link">
+							<i class="ph-user-plus me-1"></i> Register
+						</a>
+					</li>
+					<li class="nav-item">
+						<a href="{% url 'login' %}" class="nav-link">
+							<i class="ph-sign-in me-1"></i> Login
+						</a>
+					</li>
+					{% endif %}
+				</ul>
+
+			</div>
+		</div>
+	</div>
+
+	{% if messages %}
+	<div class="container-fluid mt-2">
+		{% for message in messages %}
+		<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+			{{ message }}
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
+		{% endfor %}
+	</div>
+	{% endif %}
+
+	{% block content %}{% endblock %}
+
+</body>
+
+</html>
