@@ -29,10 +29,10 @@
               </div>
             </div>
             <div class="d-flex gap-2 mb-3">
-              {% for amt in "1000,5000,10000,25000"|split:"," %}
-              <button type="button" class="btn btn-sm btn-outline-primary quick-amt"
-                data-amount="{{ amt }}">₹{{ amt }}</button>
-              {% endfor %}
+              <button type="button" class="btn btn-sm btn-outline-primary quick-amt" data-amount="1000">₹1000</button>
+              <button type="button" class="btn btn-sm btn-outline-primary quick-amt" data-amount="5000">₹5000</button>
+               <button type="button" class="btn btn-sm btn-outline-primary quick-amt" data-amount="10000">₹10000</button>
+              <button type="button" class="btn btn-sm btn-outline-primary quick-amt" data-amount="25000">₹25000</button>
             </div>
             <button type="submit" class="btn btn-primary w-100 fw-semibold">
               <i class="ph-plus me-2"></i> Add Funds

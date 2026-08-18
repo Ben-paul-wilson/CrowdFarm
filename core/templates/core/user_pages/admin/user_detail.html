@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% block title %}{{ target_user.get_full_name|default:target_user.username }} — Admin{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4" style="background:#f5f7fa; min-height:calc(100vh - 56px);">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:0.82rem;">
+      <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-decoration-none">Admin</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'admin_user_list' %}" class="text-decoration-none">Users</a></li>
+      <li class="breadcrumb-item active">{{ target_user.get_full_name|default:target_user.username }}</li>
+    </ol>
+  </nav>
+
+  <!-- Profile Header -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-start gap-4 flex-wrap">
+        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0" style="width:72px;height:72px;font-size:1.8rem;background:{% if target_user.role == 'FARMER' %}#1a6b3c{% elif target_user.role == 'INVESTOR' %}#3b5bdb{% elif target_user.role == 'AGENT' %}#b45309{% else %}#374151{% endif %};">
+          {{ target_user.first_name|first|default:target_user.username|first|upper }}
+        </div>
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <h4 class="fw-bold mb-0">{{ target_user.get_full_name|default:target_user.username }}</h4>
+            {% if target_user.role == 'FARMER' %}<span class="badge bg-success">Farmer</span>
+            {% elif target_user.role == 'INVESTOR' %}<span class="badge bg-primary">Investor</span>
+            {% elif target_user.role == 'AGENT' %}<span class="badge bg-warning text-dark">Agent</span>
+            {% elif target_user.role == 'ADMIN' %}<span class="badge bg-danger">Admin</span>{% endif %}
+            {% if target_user.is_active %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+            {% else %}
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>
+            {% endif %}
+          </div>
+          <div class="row g-3 mt-2">
+            <div class="col-md-3">
+              <div class="text-muted small">Email</div>
+              <div class="fw-semibold">{{ target_user.email }}</div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-muted small">Phone</div>
+              <div class="fw-semibold">{{ target_user.phone|default:"—" }}</div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-muted small">Aadhaar</div>
+              <div class="fw-semibold font-monospace">{{ target_user.aadhaar_number|default:"—" }}</div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-muted small">Joined</div>
+              <div class="fw-semibold">{{ target_user.date_joined|date:"d M Y" }}</div>
+            </div>
+          </div>
+          {% if target_user.address %}
+          <div class="mt-2 text-muted small">📍 {{ target_user.address }}</div>
+          {% endif %}
+        </div>
+        <!-- Toggle Active -->
+        {% if not target_user.is_superuser %}
+        <form method="post" action="{% url 'admin_user_toggle_active' target_user.id %}">
+          {% csrf_token %}
+          {% if target_user.is_active %}
+            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Deactivate this user?')">
+              <i class="ph-lock me-1"></i>Deactivate
+            </button>
+          {% else %}
+            <button type="submit" class="btn btn-success btn-sm">
+              <i class="ph-lock-open me-1"></i>Activate
+            </button>
+          {% endif %}
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Farmer Section -->
+    {% if farmer_profile %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-success bg-opacity-10 border-0 py-3">
+          <h6 class="fw-bold mb-0 text-success">🌾 Farmer Profile</h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="card border-0 bg-light text-center p-3">
+                <div class="fs-3 fw-bold text-success">₹{{ farmer_wallet.balance|floatformat:2|default:"0.00" }}</div>
+                <div class="text-muted small">Wallet Balance</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light text-center p-3">
+                <div class="fs-3 fw-bold">{{ projects|length }}</div>
+                <div class="text-muted small">Projects Submitted</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light text-center p-3">
+                <div class="fs-3 fw-bold text-muted">{{ farmer_profile.created_at|date:"d M Y" }}</div>
+                <div class="text-muted small">Profile Created</div>
+              </div>
+            </div>
+          </div>
+
+          {% if projects %}
+          <h6 class="fw-bold mb-3">Projects</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Project</th><th>Type</th><th>Status</th><th>Funding Required</th><th>Submitted</th></tr>
+              </thead>
+              <tbody>
+                {% for p in projects %}
+                <tr>
+                  <td class="fw-semibold">{{ p.title }}</td>
+                  <td><span class="badge bg-light text-dark">{{ p.get_project_type_display }}</span></td>
+                  <td>
+                    {% if p.status == 'PENDING' %}<span class="badge bg-warning text-dark">Pending</span>
+                    {% elif p.status == 'FUNDING' %}<span class="badge bg-success">Funding</span>
+                    {% elif p.status == 'COMPLETED' %}<span class="badge bg-secondary">Completed</span>
+                    {% else %}<span class="badge bg-primary">{{ p.get_status_display }}</span>{% endif %}
+                  </td>
+                  <td>₹{{ p.funding_required|floatformat:0 }}</td>
+                  <td class="text-muted small">{{ p.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if farmer_transactions %}
+          <h6 class="fw-bold mt-4 mb-3">Recent Wallet Transactions</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {% for t in farmer_transactions %}
+                <tr>
+                  <td><span class="badge bg-light text-dark">{{ t.get_transaction_type_display }}</span></td>
+                  <td class="fw-bold text-success">₹{{ t.amount|floatformat:2 }}</td>
+                  <td class="text-muted small">{{ t.description|truncatechars:50|default:"—" }}</td>
+                  <td class="text-muted small">{{ t.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Investor Section -->
+    {% if investor_profile %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary bg-opacity-10 border-0 py-3">
+          <h6 class="fw-bold mb-0 text-primary">📈 Investor Profile</h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="card border-0 bg-light text-center p-3">
+                <div class="fs-3 fw-bold text-primary">₹{{ investor_wallet.balance|floatformat:2|default:"0.00" }}</div>
+                <div class="text-muted small">Wallet Balance</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light text-center p-3">
+                <div class="fs-3 fw-bold">{{ investments|length }}</div>
+                <div class="text-muted small">Total Investments</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light text-center p-3">
+                <div class="fs-3 fw-bold text-muted">{{ investor_profile.created_at|date:"d M Y" }}</div>
+                <div class="text-muted small">Profile Created</div>
+              </div>
+            </div>
+          </div>
+
+          {% if investments %}
+          <h6 class="fw-bold mb-3">Investments</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Project</th><th>Amount</th><th>Share %</th><th>Status</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {% for inv in investments %}
+                <tr>
+                  <td class="fw-semibold">{{ inv.project.title }}</td>
+                  <td class="fw-bold text-primary">₹{{ inv.amount|floatformat:0 }}</td>
+                  <td>{{ inv.share_percentage }}%</td>
+                  <td>
+                    {% if inv.status == 'ACTIVE' %}<span class="badge bg-success">Active</span>
+                    {% elif inv.status == 'RETURNED' %}<span class="badge bg-secondary">Returned</span>
+                    {% else %}<span class="badge bg-danger">Cancelled</span>{% endif %}
+                  </td>
+                  <td class="text-muted small">{{ inv.invested_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if investor_transactions %}
+          <h6 class="fw-bold mt-4 mb-3">Recent Wallet Transactions</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {% for t in investor_transactions %}
+                <tr>
+                  <td><span class="badge bg-light text-dark">{{ t.get_transaction_type_display }}</span></td>
+                  <td class="fw-bold {% if t.transaction_type == 'WITHDRAWAL' or t.transaction_type == 'INVESTMENT' %}text-danger{% else %}text-success{% endif %}">
+                    {% if t.transaction_type == 'WITHDRAWAL' or t.transaction_type == 'INVESTMENT' %}-{% else %}+{% endif %}₹{{ t.amount|floatformat:2 }}
+                  </td>
+                  <td class="text-muted small">{{ t.description|truncatechars:50|default:"—" }}</td>
+                  <td class="text-muted small">{{ t.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Agent Section -->
+    {% if agent_profile %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-warning bg-opacity-10 border-0 py-3">
+          <h6 class="fw-bold mb-0 text-warning">🕵️ Agent Profile</h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="text-muted small">Employee ID</div>
+              <div class="fw-bold font-monospace">{{ agent_profile.employee_id }}</div>
+            </div>
+            <div class="col-md-4">
+              <div class="text-muted small">Designation</div>
+              <div class="fw-bold">{{ agent_profile.designation }}</div>
+            </div>
+            <div class="col-md-4">
+              <div class="text-muted small">Assigned Projects</div>
+              <div class="fw-bold">{{ agent_projects|length }}</div>
+            </div>
+          </div>
+
+          {% if agent_projects %}
+          <h6 class="fw-bold mb-3">Assigned Projects</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Project</th><th>Farmer</th><th>Status</th><th>Created</th></tr>
+              </thead>
+              <tbody>
+                {% for p in agent_projects %}
+                <tr>
+                  <td class="fw-semibold">{{ p.title }}</td>
+                  <td class="text-muted small">{{ p.asset.farmer.user.get_full_name }}</td>
+                  <td><span class="badge bg-primary">{{ p.get_status_display }}</span></td>
+                  <td class="text-muted small">{{ p.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Bank Accounts -->
+    {% if bank_accounts %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+          <h6 class="fw-bold mb-0">🏦 Bank Accounts</h6>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr><th class="ps-4">Bank</th><th>Account Holder</th><th>Account No.</th><th>IFSC</th><th>Branch</th><th>Primary</th></tr>
+            </thead>
+            <tbody>
+              {% for ba in bank_accounts %}
+              <tr>
+                <td class="ps-4 fw-semibold">{{ ba.bank_name }}</td>
+                <td>{{ ba.account_holder_name }}</td>
+                <td class="font-monospace">{{ ba.account_number }}</td>
+                <td class="font-monospace">{{ ba.ifsc_code }}</td>
+                <td class="text-muted small">{{ ba.branch_name|default:"—" }}</td>
+                <td>{% if ba.is_primary %}<span class="badge bg-success">Primary</span>{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

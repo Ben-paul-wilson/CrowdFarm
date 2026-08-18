@@ -28,7 +28,7 @@ def role_required(*roles):
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect('login')
-            if request.user.role not in roles:
+            if request.user.role not in roles and not (request.user.is_superuser and 'ADMIN' in roles):
                 messages.error(request, "You don't have permission to access that page.")
                 return redirect('home')
             return view_func(request, *args, **kwargs)
@@ -70,6 +70,9 @@ def login(request):
 
 
 def _role_redirect(user):
+    if user.is_superuser and not user.role:
+        return redirect('admin_dashboard')
+        
     role_map = {
         'ADMIN': 'admin_dashboard',
         'FARMER': 'farmer_dashboard',
@@ -793,3 +796,250 @@ def admin_dashboard(request):
         'recent_projects': Project.objects.order_by('-created_at')[:5],
     }
     return render(request, 'core/user_pages/admin/dashboard.html', ctx)
+
+
+# ─────────────────────────────────────────────
+# ADMIN — USER MANAGEMENT
+# ─────────────────────────────────────────────
+
+@role_required('ADMIN')
+def admin_user_list(request):
+    role_filter = request.GET.get('role', '')
+    search = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '')
+
+    users = User.objects.all().order_by('-date_joined')
+
+    if role_filter:
+        users = users.filter(role=role_filter)
+    if search:
+        users = users.filter(
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(email__icontains=search) |
+            Q(username__icontains=search)
+        )
+    if status_filter == 'active':
+        users = users.filter(is_active=True)
+    elif status_filter == 'inactive':
+        users = users.filter(is_active=False)
+
+    ctx = {
+        'users': users,
+        'role_filter': role_filter,
+        'search': search,
+        'status_filter': status_filter,
+        'total': users.count(),
+    }
+    return render(request, 'core/user_pages/admin/users.html', ctx)
+
+
+@role_required('ADMIN')
+def admin_user_detail(request, user_id):
+    target_user = get_object_or_404(User, pk=user_id)
+
+    farmer_profile = getattr(target_user, 'farmer_profile', None)
+    investor_profile = getattr(target_user, 'investor_profile', None)
+    agent_profile = getattr(target_user, 'agent_profile', None)
+
+    farmer_wallet = None
+    investor_wallet = None
+    farmer_transactions = []
+    investor_transactions = []
+    investments = []
+    projects = []
+
+    if farmer_profile:
+        farmer_wallet = getattr(farmer_profile, 'wallet', None)
+        if farmer_wallet:
+            farmer_transactions = farmer_wallet.transactions.order_by('-created_at')[:10]
+        projects = Project.objects.filter(asset__farmer=farmer_profile).order_by('-created_at')
+
+    if investor_profile:
+        investor_wallet = getattr(investor_profile, 'wallet', None)
+        if investor_wallet:
+            investor_transactions = investor_wallet.transactions.order_by('-created_at')[:10]
+        investments = Investment.objects.filter(investor=investor_profile).select_related('project').order_by('-invested_at')
+
+    agent_projects = []
+    if agent_profile:
+        agent_projects = Project.objects.filter(assigned_agent=agent_profile).order_by('-created_at')
+
+    ctx = {
+        'target_user': target_user,
+        'farmer_profile': farmer_profile,
+        'investor_profile': investor_profile,
+        'agent_profile': agent_profile,
+        'farmer_wallet': farmer_wallet,
+        'investor_wallet': investor_wallet,
+        'farmer_transactions': farmer_transactions,
+        'investor_transactions': investor_transactions,
+        'investments': investments,
+        'projects': projects,
+        'agent_projects': agent_projects,
+        'bank_accounts': target_user.bank_accounts.all(),
+    }
+    return render(request, 'core/user_pages/admin/user_detail.html', ctx)
+
+
+@role_required('ADMIN')
+def admin_user_toggle_active(request, user_id):
+    if request.method == 'POST':
+        target_user = get_object_or_404(User, pk=user_id)
+        target_user.is_active = not target_user.is_active
+        target_user.save()
+        status = 'activated' if target_user.is_active else 'deactivated'
+        messages.success(request, f'User {target_user.username} has been {status}.')
+    return redirect('admin_user_detail', user_id=user_id)
+
+
+# ─────────────────────────────────────────────
+# ADMIN — PROJECT MANAGEMENT
+# ─────────────────────────────────────────────
+
+@role_required('ADMIN')
+def admin_project_list(request):
+    status_filter = request.GET.get('status', '')
+    type_filter = request.GET.get('type', '')
+    search = request.GET.get('q', '').strip()
+
+    projects = Project.objects.select_related(
+        'asset__farmer__user', 'assigned_agent__user'
+    ).order_by('-created_at')
+
+    if status_filter:
+        projects = projects.filter(status=status_filter)
+    if type_filter:
+        projects = projects.filter(project_type=type_filter)
+    if search:
+        projects = projects.filter(
+            Q(title__icontains=search) |
+            Q(asset__farmer__user__first_name__icontains=search) |
+            Q(asset__farmer__user__last_name__icontains=search)
+        )
+
+    status_counts = {
+        'PENDING': Project.objects.filter(status='PENDING').count(),
+        'FUNDING': Project.objects.filter(status='FUNDING').count(),
+        'IN_PROGRESS': Project.objects.filter(status='IN_PROGRESS').count(),
+        'COMPLETED': Project.objects.filter(status='COMPLETED').count(),
+    }
+
+    ctx = {
+        'projects': projects,
+        'status_filter': status_filter,
+        'type_filter': type_filter,
+        'search': search,
+        'status_counts': status_counts,
+        'total': projects.count(),
+        'status_choices': Project.STATUS_CHOICES,
+        'type_choices': Project.PROJECT_TYPES,
+    }
+    return render(request, 'core/user_pages/admin/projects.html', ctx)
+
+
+@role_required('ADMIN')
+def admin_project_detail(request, project_id):
+    project = get_object_or_404(
+        Project.objects.select_related('asset__farmer__user', 'assigned_agent__user'),
+        pk=project_id
+    )
+    agents = AgentProfile.objects.select_related('user').all()
+    investments = Investment.objects.filter(project=project).select_related('investor__user')
+    verifications = project.verifications.select_related('agent__user').order_by('-created_at')
+    valuations = project.valuations.select_related('agent__user').order_by('-valuation_date')
+    ownership_docs = project.ownership_documents.all()
+    sale = getattr(project, 'sale', None)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'change_status':
+            new_status = request.POST.get('status')
+            valid = [s[0] for s in Project.STATUS_CHOICES]
+            if new_status in valid:
+                project.status = new_status
+                project.save()
+                messages.success(request, f'Project status updated to {project.get_status_display()}.')
+        elif action == 'reassign_agent':
+            agent_id = request.POST.get('agent_id')
+            if agent_id:
+                agent = get_object_or_404(AgentProfile, pk=agent_id)
+                project.assigned_agent = agent
+                project.save()
+                messages.success(request, f'Project reassigned to {agent.user.get_full_name()}.')
+            else:
+                project.assigned_agent = None
+                project.save()
+                messages.success(request, 'Agent removed from project.')
+        return redirect('admin_project_detail', project_id=project_id)
+
+    ctx = {
+        'project': project,
+        'agents': agents,
+        'investments': investments,
+        'verifications': verifications,
+        'valuations': valuations,
+        'ownership_docs': ownership_docs,
+        'sale': sale,
+        'status_choices': Project.STATUS_CHOICES,
+        'total_funded': investments.aggregate(t=Sum('amount'))['t'] or Decimal('0'),
+    }
+    return render(request, 'core/user_pages/admin/project_detail.html', ctx)
+
+
+# ─────────────────────────────────────────────
+# ADMIN — FINANCIALS
+# ─────────────────────────────────────────────
+
+@role_required('ADMIN')
+def admin_financials(request):
+    company_accounts = CompanyAccount.objects.all()
+    company_total = company_accounts.aggregate(t=Sum('balance'))['t'] or Decimal('0')
+    company_transactions = CompanyTransaction.objects.select_related('account', 'project').order_by('-created_at')[:20]
+
+    investor_wallet_total = InvestorWallet.objects.aggregate(t=Sum('balance'))['t'] or Decimal('0')
+    farmer_wallet_total = FarmerWallet.objects.aggregate(t=Sum('balance'))['t'] or Decimal('0')
+    total_invested = Investment.objects.aggregate(t=Sum('amount'))['t'] or Decimal('0')
+    total_returned = Investment.objects.filter(status='RETURNED').aggregate(t=Sum('actual_return'))['t'] or Decimal('0')
+
+    recent_investor_txns = InvestorWalletTransaction.objects.select_related(
+        'wallet__investor__user'
+    ).order_by('-created_at')[:15]
+
+    recent_farmer_txns = FarmerWalletTransaction.objects.select_related(
+        'wallet__farmer__user'
+    ).order_by('-created_at')[:15]
+
+    ctx = {
+        'company_accounts': company_accounts,
+        'company_total': company_total,
+        'company_transactions': company_transactions,
+        'investor_wallet_total': investor_wallet_total,
+        'farmer_wallet_total': farmer_wallet_total,
+        'total_invested': total_invested,
+        'total_returned': total_returned,
+        'recent_investor_txns': recent_investor_txns,
+        'recent_farmer_txns': recent_farmer_txns,
+        'platform_total': company_total + investor_wallet_total + farmer_wallet_total,
+    }
+    return render(request, 'core/user_pages/admin/financials.html', ctx)
+
+
+# ─────────────────────────────────────────────
+# ADMIN — AGENT MANAGEMENT
+# ─────────────────────────────────────────────
+
+@role_required('ADMIN')
+def admin_agents(request):
+    agents = AgentProfile.objects.select_related('user').annotate(
+        assigned_count=Count('assigned_projects'),
+        completed_count=Count('assigned_projects', filter=Q(assigned_projects__status='COMPLETED')),
+        verification_count=Count('verifications'),
+    ).order_by('-assigned_count')
+
+    ctx = {
+        'agents': agents,
+        'total_agents': agents.count(),
+        'total_assignments': sum(a.assigned_count for a in agents),
+    }
+    return render(request, 'core/user_pages/admin/agents.html', ctx)

@@ -43,4 +43,11 @@ urlpatterns = [
 
     # ── Admin ────────────────────────────────────
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin-portal/users/', views.admin_user_list, name='admin_user_list'),
+    path('admin-portal/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+    path('admin-portal/users/<int:user_id>/toggle-active/', views.admin_user_toggle_active, name='admin_user_toggle_active'),
+    path('admin-portal/projects/', views.admin_project_list, name='admin_project_list'),
+    path('admin-portal/projects/<int:project_id>/', views.admin_project_detail, name='admin_project_detail'),
+    path('admin-portal/financials/', views.admin_financials, name='admin_financials'),
+    path('admin-portal/agents/', views.admin_agents, name='admin_agents'),
 ]

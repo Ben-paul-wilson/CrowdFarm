@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Agent Management — CrowdFarm Admin{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4" style="background:#f5f7fa; min-height:calc(100vh - 56px);">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1" style="font-size:0.82rem;">
+          <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-decoration-none">Admin</a></li>
+          <li class="breadcrumb-item active">Agent Management</li>
+        </ol>
+      </nav>
+      <h2 class="fw-bold mb-0">🕵️ Agent Management</h2>
+      <p class="text-muted mb-0">{{ total_agents }} agent{{ total_agents|pluralize }} · {{ total_assignments }} total assignments</p>
+    </div>
+  </div>
+
+  <!-- Summary Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm text-center py-4">
+        <div class="fs-2 fw-bold text-warning">{{ total_agents }}</div>
+        <div class="text-muted small">Total Agents</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm text-center py-4">
+        <div class="fs-2 fw-bold text-primary">{{ total_assignments }}</div>
+        <div class="text-muted small">Total Project Assignments</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm text-center py-4">
+        <div class="fs-2 fw-bold text-success">
+          {% if total_agents > 0 %}{{ total_assignments|floatformat:1 }}{% else %}0{% endif %}
+        </div>
+        <div class="text-muted small">Avg. Assignments per Agent</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Cards Grid -->
+  <div class="row g-4">
+    {% for agent in agents %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0" style="width:56px;height:56px;font-size:1.3rem;background:linear-gradient(135deg,#6d28d9,#4c1d95);">
+              {{ agent.user.first_name|first|upper }}
+            </div>
+            <div>
+              <div class="fw-bold fs-6">{{ agent.user.get_full_name|default:agent.user.username }}</div>
+              <div class="text-muted small">{{ agent.designation }}</div>
+              <div class="text-muted font-monospace" style="font-size:0.75rem;">{{ agent.employee_id }}</div>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="row g-2 mb-4">
+            <div class="col-4 text-center">
+              <div class="card border-0 bg-light py-2">
+                <div class="fs-5 fw-bold text-primary">{{ agent.assigned_count }}</div>
+                <div style="font-size:0.7rem;" class="text-muted">Assigned</div>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="card border-0 bg-light py-2">
+                <div class="fs-5 fw-bold text-success">{{ agent.completed_count }}</div>
+                <div style="font-size:0.7rem;" class="text-muted">Completed</div>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="card border-0 bg-light py-2">
+                <div class="fs-5 fw-bold text-warning">{{ agent.verification_count }}</div>
+                <div style="font-size:0.7rem;" class="text-muted">Verified</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workload Progress -->
+          {% if agent.assigned_count > 0 %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>Completion Rate</span>
+              <span class="fw-semibold">{% widthratio agent.completed_count agent.assigned_count 100 %}%</span>
+            </div>
+            <div class="progress" style="height:6px;">
+              <div class="progress-bar bg-success" style="width:{% widthratio agent.completed_count agent.assigned_count 100 %}%;"></div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Contact Info -->
+          <div class="text-muted small mb-3">
+            <i class="ph-envelope me-1"></i>{{ agent.user.email }}
+          </div>
+          {% if agent.user.phone %}
+          <div class="text-muted small mb-3">
+            <i class="ph-phone me-1"></i>{{ agent.user.phone }}
+          </div>
+          {% endif %}
+
+          <a href="{% url 'admin_user_detail' agent.user.id %}" class="btn btn-outline-primary btn-sm w-100">
+            <i class="ph-user me-1"></i>View Full Profile
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 text-muted">
+          <i class="ph-identification-badge fs-1 d-block mb-2"></i>
+          No agents registered yet.
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

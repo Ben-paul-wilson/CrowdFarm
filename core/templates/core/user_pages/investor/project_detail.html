@@ -75,8 +75,11 @@
             <div class="text-muted small">of ₹{{ project.funding_required|floatformat:0 }} raised</div>
           </div>
           <div class="progress mb-2" style="height:10px;">
-            <div class="progress-bar bg-success" style="width: {{ pct }}%;"></div>
+            <div class="progress-bar bg-success" id="fundingProgressBar"></div>
           </div>
+          <script>
+            document.getElementById('fundingProgressBar').style.width = "{{ pct }}%";
+          </script>
           <div class="d-flex justify-content-between text-muted small mb-4">
             <span>{{ pct }}% funded</span>
             {% if project.max_investors %}

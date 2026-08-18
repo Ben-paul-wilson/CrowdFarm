@@ -74,7 +74,7 @@
 						</a>
 					</li>
 					{% endif %}
-					{% if user.is_authenticated and user.role in 'AGENT,ADMIN' %}
+					{% if user.is_authenticated and user.role == 'AGENT' %}
 					<li class="nav-item">
 						<a href="{% url 'agent_dashboard' %}" class="nav-link">
 							<i class="ph-shield-check me-1"></i> Agent Dashboard
@@ -85,14 +85,46 @@
 							<i class="ph-clock me-1"></i> Pending Projects
 						</a>
 					</li>
-					{% endif %}
-					{% if user.is_authenticated and user.role == 'ADMIN' %}
 					<li class="nav-item">
-						<a href="{% url 'admin_dashboard' %}" class="nav-link">
-							<i class="ph-gauge me-1"></i> Admin
+						<a href="{% url 'agent_assigned_projects' %}" class="nav-link">
+							<i class="ph-list-checks me-1"></i> My Assignments
 						</a>
 					</li>
-					{% endif %}
+				{% endif %}
+				{% if user.is_authenticated and user.role == 'ADMIN' or user.is_superuser %}
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+							<i class="ph-gauge me-1"></i> Admin
+						</a>
+						<div class="dropdown-menu">
+							<a class="dropdown-item" href="{% url 'admin_dashboard' %}">
+								<i class="ph-layout me-2 text-muted"></i> Dashboard
+							</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="{% url 'admin_user_list' %}">
+								<i class="ph-users-three me-2 text-primary"></i> User Management
+							</a>
+							<a class="dropdown-item" href="{% url 'admin_project_list' %}">
+								<i class="ph-leaf me-2 text-success"></i> Project Management
+							</a>
+							<a class="dropdown-item" href="{% url 'admin_financials' %}">
+								<i class="ph-currency-inr me-2 text-warning"></i> Financial Overview
+							</a>
+							<a class="dropdown-item" href="{% url 'admin_agents' %}">
+								<i class="ph-identification-badge me-2 text-info"></i> Agent Management
+							</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="{% url 'agent_pending_projects' %}">
+								<i class="ph-clock me-2 text-danger"></i> Pending Projects
+							</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="{% url 'admin:index' %}">
+								<i class="ph-database me-2 text-muted"></i> Django Admin Panel
+							</a>
+						</div>
+					</li>
+				{% endif %}
+
 				</ul>
 
 				<ul class="navbar-nav ms-auto">
@@ -106,7 +138,7 @@
 						<div class="dropdown-menu dropdown-menu-end">
 							<div class="dropdown-header">
 								<span class="fw-semibold">{{ user.email }}</span><br>
-								<small class="text-muted text-uppercase">{{ user.role }}</small>
+								<small class="text-muted text-uppercase">{{ user.role|default:"SUPERUSER" }}</small>
 							</div>
 							<div class="dropdown-divider"></div>
 
@@ -124,7 +156,7 @@
 								<i class="ph-bank me-2"></i> Bank Accounts
 							</a>
 
-							{% if user.is_staff or user.role == 'ADMIN' %}
+							{% if user.is_staff or user.role == 'ADMIN' or user.is_superuser %}
 							<div class="dropdown-divider"></div>
 							<a class="dropdown-item" href="{% url 'admin:index' %}">
 								<i class="ph-gear me-2"></i> Django Admin Panel
