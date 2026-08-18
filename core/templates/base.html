@@ -8,6 +8,18 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<title>{% block title %}CrowdFarm{% endblock %}</title>
 	{% include "includes/links.html" %}
+	<style>
+		/* Override Limitless theme: it sets html/body to overflow:hidden which blocks page scroll */
+		html, body {
+			height: auto !important;
+			overflow: visible !important;
+		}
+		.page-content, .content-wrapper {
+			height: auto !important;
+			overflow: visible !important;
+			display: block !important;
+		}
+	</style>
 </head>
 
 <body>
@@ -147,9 +159,9 @@
 
 	{% block global_messages %}
 	{% if messages %}
-	<div class="container-fluid">
+	<div class="container-fluid pt-2">
 		{% for message in messages %}
-		<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show mt-2" role="alert">
+		<div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
 			{{ message }}
 			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 		</div>

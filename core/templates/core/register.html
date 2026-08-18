@@ -164,13 +164,25 @@
 					<div class="row g-3 mb-4">
 						<div class="col-6">
 							<label class="form-label fw-semibold" for="regPassword">Password *</label>
-							<input type="password" id="regPassword" name="password" class="form-control"
-								placeholder="Min 8 characters" required>
+							<div class="form-control-feedback form-control-feedback-start" style="position: relative;">
+								<input type="password" id="regPassword" name="password" class="form-control"
+									placeholder="Min 8 characters" required style="padding-right: 2.5rem;">
+								<button type="button" class="btn btn-sm btn-link text-muted p-0 toggle-password" data-target="regPassword"
+									style="position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:5;">
+									<i class="ph-eye" style="font-size:1.1rem;"></i>
+								</button>
+							</div>
 						</div>
 						<div class="col-6">
 							<label class="form-label fw-semibold" for="confirmPassword">Confirm Password *</label>
-							<input type="password" id="confirmPassword" name="confirm_password" class="form-control"
-								placeholder="Repeat password" required>
+							<div class="form-control-feedback form-control-feedback-start" style="position: relative;">
+								<input type="password" id="confirmPassword" name="confirm_password" class="form-control"
+									placeholder="Repeat password" required style="padding-right: 2.5rem;">
+								<button type="button" class="btn btn-sm btn-link text-muted p-0 toggle-password" data-target="confirmPassword"
+									style="position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:5;">
+									<i class="ph-eye" style="font-size:1.1rem;"></i>
+								</button>
+							</div>
 						</div>
 					</div>
 
@@ -224,6 +236,25 @@
 		const parentCard = checked.closest('.role-card');
 		if (parentCard) selectCard(parentCard);
 	}
+
+	// Password visibility toggle
+	document.querySelectorAll('.toggle-password').forEach(button => {
+		button.addEventListener('click', function () {
+			const targetId = this.getAttribute('data-target');
+			const input = document.getElementById(targetId);
+			const icon = this.querySelector('i');
+			
+			if (input.type === 'password') {
+				input.type = 'text';
+				icon.classList.remove('ph-eye');
+				icon.classList.add('ph-eye-closed');
+			} else {
+				input.type = 'password';
+				icon.classList.remove('ph-eye-closed');
+				icon.classList.add('ph-eye');
+			}
+		});
+	});
 })();
 </script>
 

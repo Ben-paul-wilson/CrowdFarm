@@ -162,9 +162,15 @@
 	document.getElementById('togglePassword').addEventListener('click', function () {
 		const input = document.getElementById('loginPassword');
 		const icon = document.getElementById('toggleIcon');
-		const isHidden = input.type === 'password';
-		input.type = isHidden ? 'text' : 'password';
-		icon.classList.replace(isHidden ? 'ph-eye' : 'ph-eye-slash', isHidden ? 'ph-eye-slash' : 'ph-eye');
+		if (input.type === 'password') {
+			input.type = 'text';
+			icon.classList.remove('ph-eye');
+			icon.classList.add('ph-eye-closed');
+		} else {
+			input.type = 'password';
+			icon.classList.remove('ph-eye-closed');
+			icon.classList.add('ph-eye');
+		}
 	});
 
 	document.getElementById('loginForm').addEventListener('submit', function () {

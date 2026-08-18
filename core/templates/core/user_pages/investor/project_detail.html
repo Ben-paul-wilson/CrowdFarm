@@ -75,11 +75,15 @@
             <div class="text-muted small">of ₹{{ project.funding_required|floatformat:0 }} raised</div>
           </div>
           <div class="progress mb-2" style="height:10px;">
-            <div class="progress-bar bg-success" style="width:{{ pct }}%"></div>
+            <div class="progress-bar bg-success" style="width: {{ pct }}%;"></div>
           </div>
           <div class="d-flex justify-content-between text-muted small mb-4">
             <span>{{ pct }}% funded</span>
+            {% if project.max_investors %}
             <span>{{ slots_left }} investor slot{{ slots_left|pluralize }} left</span>
+            {% else %}
+            <span>No investor limit</span>
+            {% endif %}
           </div>
 
           <hr>
@@ -93,7 +97,7 @@
           <div class="alert alert-secondary py-2 text-center">This project is not currently open for investment.</div>
           {% elif already_invested %}
           <div class="alert alert-success py-2 text-center"><i class="ph-check-circle me-1"></i>You have already invested in this project.</div>
-          {% elif slots_left <= 0 %}
+          {% elif project.max_investors and slots_left <= 0 %}
           <div class="alert alert-warning py-2 text-center">All investor slots are filled.</div>
           {% else %}
           {% if messages %}{% for m in messages %}<div class="alert alert-danger py-2">{{ m }}</div>{% endfor %}{% endif %}

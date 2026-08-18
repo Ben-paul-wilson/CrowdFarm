@@ -21,8 +21,17 @@
       <label class="form-label fw-semibold mb-1">State</label>
       <input type="text" name="state" class="form-control" placeholder="Filter by state" value="{{ filter_state }}">
     </div>
+    {% if user.is_authenticated and user.role == 'AGENT' %}
+    <div>
+      <label class="form-label fw-semibold mb-1">Agent View</label>
+      <select name="agent_view" class="form-select" onchange="this.form.submit()">
+        <option value="mine" {% if agent_view == 'mine' %}selected{% endif %}>My Approved Projects</option>
+        <option value="all" {% if agent_view == 'all' %}selected{% endif %}>All Projects</option>
+      </select>
+    </div>
+    {% endif %}
     <button type="submit" class="btn btn-outline-success">Filter</button>
-    {% if filter_type or filter_state %}
+    {% if filter_type or filter_state or agent_view == 'all' %}
     <a href="{% url 'investor_browse' %}" class="btn btn-outline-secondary">Clear</a>
     {% endif %}
   </form>
@@ -53,7 +62,11 @@
 
           <div class="d-flex justify-content-between text-muted small mb-4">
             <span>{{ item.pct }}% funded</span>
+            {% if p.max_investors %}
             <span>{{ item.slots_left }} slot{{ item.slots_left|pluralize }} left</span>
+            {% else %}
+            <span>No limit</span>
+            {% endif %}
           </div>
 
           {% if p.evaluated_value %}
@@ -63,10 +76,20 @@
           <div class="text-muted small mb-3"><i class="ph-trend-up me-1"></i>Expected Profit: ₹{{ p.expected_profit|floatformat:0 }}</div>
           {% endif %}
 
-          {% if user.is_authenticated and user.role == 'INVESTOR' %}
-          <a href="{% url 'investor_project_detail' p.id %}" class="btn btn-success w-100 fw-semibold">
-            Invest Now
-          </a>
+          {% if user.is_authenticated %}
+            {% if user.role == 'INVESTOR' %}
+            <a href="{% url 'investor_project_detail' p.id %}" class="btn btn-success w-100 fw-semibold">
+              Go Invest
+            </a>
+            {% elif user.role == 'AGENT' or user.role == 'ADMIN' %}
+            <a href="{% url 'agent_project_detail' p.id %}" class="btn btn-primary w-100 fw-semibold">
+              View Details
+            </a>
+            {% elif user.role == 'FARMER' %}
+            <a href="{% url 'farmer_project_detail' p.id %}" class="btn btn-primary w-100 fw-semibold">
+              View Details
+            </a>
+            {% endif %}
           {% else %}
           <a href="{% url 'login' %}" class="btn btn-outline-success w-100">Login to Invest</a>
           {% endif %}

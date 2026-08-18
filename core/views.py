@@ -333,6 +333,12 @@ def investor_browse(request):
     qs = Project.objects.filter(status='FUNDING').select_related('asset__farmer__user')
     project_type = request.GET.get('type', '')
     state = request.GET.get('state', '')
+    agent_view = request.GET.get('agent_view', 'mine')
+
+    if request.user.is_authenticated and request.user.role == 'AGENT':
+        if agent_view != 'all':
+            qs = qs.filter(assigned_agent=request.user.agent_profile)
+
     if project_type:
         qs = qs.filter(project_type=project_type)
     if state:
@@ -348,13 +354,14 @@ def investor_browse(request):
             'funded': funded,
             'pct': min(pct, 100),
             'inv_count': inv_count,
-            'slots_left': p.max_investors - inv_count,
+            'slots_left': (p.max_investors or 0) - inv_count if p.max_investors else 99,
         })
 
     ctx = {
         'projects_data': projects_data,
         'filter_type': project_type,
         'filter_state': state,
+        'agent_view': agent_view,
     }
     return render(request, 'core/user_pages/investor/browse.html', ctx)
 
@@ -377,7 +384,7 @@ def investor_project_detail(request, project_id):
                 raise ValueError('Amount must be positive.')
             if amount > wallet.balance:
                 raise ValueError('Insufficient wallet balance.')
-            if inv_count >= project.max_investors:
+            if project.max_investors and inv_count >= project.max_investors:
                 raise ValueError('This project has reached its maximum number of investors.')
 
             share_pct = (amount / project.funding_required * 100).quantize(Decimal('0.01'))
@@ -413,7 +420,7 @@ def investor_project_detail(request, project_id):
         'funded': funded,
         'pct': min(pct, 100),
         'inv_count': inv_count,
-        'slots_left': project.max_investors - inv_count,
+        'slots_left': (project.max_investors or 0) - inv_count if project.max_investors else 99,
         'already_invested': already_invested,
         'verifications': project.verifications.filter(decision='APPROVED'),
         'valuations': project.valuations.all(),
