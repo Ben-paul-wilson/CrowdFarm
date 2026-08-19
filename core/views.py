@@ -117,10 +117,8 @@ def register(request):
             errors.append('An account with this email already exists.')
         if User.objects.filter(aadhaar_number=aadhaar).exists():
             errors.append('This Aadhaar number is already registered.')
-        if role not in ['FARMER', 'INVESTOR', 'AGENT']:
+        if role not in ['FARMER', 'INVESTOR']:
             errors.append('Please select a valid role.')
-        if role == 'AGENT' and not (employee_id and designation):
-            errors.append('Employee ID and Designation are required for Agent registration.')
 
         if errors:
             for e in errors:
@@ -147,12 +145,6 @@ def register(request):
                 elif role == 'INVESTOR':
                     profile = InvestorProfile.objects.create(user=user)
                     InvestorWallet.objects.create(investor=profile)
-                elif role == 'AGENT':
-                    AgentProfile.objects.create(
-                        user=user,
-                        employee_id=employee_id,
-                        designation=designation,
-                    )
             messages.success(request, 'Account created successfully! Please log in.')
             return redirect('login')
         except Exception as ex:
@@ -161,7 +153,6 @@ def register(request):
     role_options = [
         ('FARMER', 'Farmer', 'plant'),
         ('INVESTOR', 'Investor', 'chart-line-up'),
-        ('AGENT', 'Agent', 'shield-check'),
     ]
     return render(request, 'core/register.html', {'role_options': role_options})
 
@@ -347,11 +338,30 @@ def investor_browse(request):
     if state:
         qs = qs.filter(asset__state__icontains=state)
 
+    sort_by = request.GET.get('sort', 'recent')
+    if sort_by == 'oldest':
+        qs = qs.order_by('created_at')
+    elif sort_by == 'most_value':
+        qs = qs.order_by('-expected_profit')
+    elif sort_by == 'least_value':
+        qs = qs.order_by('expected_profit')
+    elif sort_by == 'most_raise':
+        qs = qs.order_by('-funding_required')
+    elif sort_by == 'least_raise':
+        qs = qs.order_by('funding_required')
+    elif sort_by == 'most_investors':
+        qs = qs.annotate(inv_count=Count('investments')).order_by('-inv_count', '-created_at')
+    elif sort_by == 'least_investors':
+        qs = qs.annotate(inv_count=Count('investments')).order_by('inv_count', '-created_at')
+    else:
+        qs = qs.order_by('-created_at')
+        sort_by = 'recent'
+
     projects_data = []
     for p in qs:
         funded = p.investments.aggregate(t=Sum('amount'))['t'] or Decimal('0')
         pct = int(funded / p.funding_required * 100) if p.funding_required else 0
-        inv_count = p.investments.count()
+        inv_count = getattr(p, 'inv_count', p.investments.count())
         projects_data.append({
             'project': p,
             'funded': funded,
@@ -365,6 +375,7 @@ def investor_browse(request):
         'filter_type': project_type,
         'filter_state': state,
         'agent_view': agent_view,
+        'sort_by': sort_by,
     }
     return render(request, 'core/user_pages/investor/browse.html', ctx)
 
@@ -375,6 +386,7 @@ def investor_project_detail(request, project_id):
     profile = get_object_or_404(InvestorProfile, user=request.user)
     wallet, _ = InvestorWallet.objects.get_or_create(investor=profile)
     funded = project.investments.aggregate(t=Sum('amount'))['t'] or Decimal('0')
+    remaining_funding = project.funding_required - funded
     pct = int(funded / project.funding_required * 100) if project.funding_required else 0
     inv_count = project.investments.count()
     already_invested = Investment.objects.filter(investor=profile, project=project).exists()
@@ -387,6 +399,8 @@ def investor_project_detail(request, project_id):
                 raise ValueError('Amount must be positive.')
             if amount > wallet.balance:
                 raise ValueError('Insufficient wallet balance.')
+            if amount > remaining_funding:
+                raise ValueError(f'You can only invest up to ₹{remaining_funding}.')
             if project.max_investors and inv_count >= project.max_investors:
                 raise ValueError('This project has reached its maximum number of investors.')
 
@@ -419,14 +433,14 @@ def investor_project_detail(request, project_id):
 
     ctx = {
         'project': project,
-        'wallet': wallet,
         'funded': funded,
+        'remaining_funding': remaining_funding,
         'pct': min(pct, 100),
-        'inv_count': inv_count,
+        'wallet': wallet,
         'slots_left': (project.max_investors or 0) - inv_count if project.max_investors else 99,
-        'already_invested': already_invested,
         'verifications': project.verifications.filter(decision='APPROVED'),
         'valuations': project.valuations.all(),
+        'already_invested': already_invested,
     }
     return render(request, 'core/user_pages/investor/project_detail.html', ctx)
 

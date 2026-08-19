@@ -18,7 +18,7 @@
 		</div>
 		<div class="position-relative">
 			<h2 class="fw-bold lh-base mb-3" style="font-size: 1.8rem;">Join the farming revolution.</h2>
-			<p class="text-white-50 mb-4">Register as a Farmer, Investor, or Agent and start your journey on India's most trusted agricultural crowdfunding platform.</p>
+			<p class="text-white-50 mb-4">Register as a Farmer or Investor and start your journey on India's most trusted agricultural crowdfunding platform.</p>
 			<div class="d-flex flex-column gap-3">
 				<div class="d-flex align-items-center gap-3">
 					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
@@ -33,13 +33,6 @@
 						<i class="ph-chart-line-up text-white"></i>
 					</div>
 					<span class="small">Investors — fund projects &amp; earn returns</span>
-				</div>
-				<div class="d-flex align-items-center gap-3">
-					<div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-						style="width:36px;height:36px;background:rgba(255,255,255,0.15);">
-						<i class="ph-shield-check text-white"></i>
-					</div>
-					<span class="small">Agents — verify and manage projects</span>
 				</div>
 			</div>
 		</div>
@@ -93,14 +86,6 @@
 								<i class="ph-chart-line-up d-block mb-1 text-success" style="font-size:1.8rem;"></i>
 								<span class="fw-semibold small d-block">Investor</span>
 							</label>
-
-							<label class="role-card flex-fill text-center border rounded-3 p-3 {% if post.role == 'AGENT' %}border-success bg-success bg-opacity-10{% endif %}"
-								for="role_AGENT" style="cursor:pointer; transition: all 0.15s;">
-								<input type="radio" name="role" id="role_AGENT" value="AGENT" class="d-none role-radio"
-									{% if post.role == 'AGENT' %}checked{% endif %}>
-								<i class="ph-shield-check d-block mb-1 text-success" style="font-size:1.8rem;"></i>
-								<span class="fw-semibold small d-block">Agent</span>
-							</label>
 						</div>
 					</div>
 
@@ -108,54 +93,67 @@
 					<div class="row g-3 mb-3">
 						<div class="col-6">
 							<label class="form-label fw-semibold" for="firstName">First Name *</label>
-							<input type="text" id="firstName" name="first_name" class="form-control"
-								value="{{ post.first_name|default:'' }}" required>
+							<div class="form-control-feedback form-control-feedback-start">
+								<input type="text" id="firstName" name="first_name" class="form-control"
+									value="{{ post.first_name|default:'' }}" required>
+								<div class="form-control-feedback-icon">
+									<i class="ph-user text-muted"></i>
+								</div>
+							</div>
 						</div>
 						<div class="col-6">
 							<label class="form-label fw-semibold" for="lastName">Last Name *</label>
-							<input type="text" id="lastName" name="last_name" class="form-control"
-								value="{{ post.last_name|default:'' }}" required>
+							<div class="form-control-feedback form-control-feedback-start">
+								<input type="text" id="lastName" name="last_name" class="form-control"
+									value="{{ post.last_name|default:'' }}" required>
+								<div class="form-control-feedback-icon">
+									<i class="ph-user text-muted"></i>
+								</div>
+							</div>
 						</div>
 					</div>
 
 					<div class="mb-3">
 						<label class="form-label fw-semibold" for="regEmail">Email address *</label>
-						<input type="email" id="regEmail" name="email" class="form-control"
-							placeholder="you@example.com" value="{{ post.email|default:'' }}" required>
+						<div class="form-control-feedback form-control-feedback-start">
+							<input type="email" id="regEmail" name="email" class="form-control"
+								placeholder="you@example.com" value="{{ post.email|default:'' }}" required>
+							<div class="form-control-feedback-icon">
+								<i class="ph-envelope text-muted"></i>
+							</div>
+						</div>
 					</div>
 
 					<div class="mb-3">
 						<label class="form-label fw-semibold" for="regPhone">Phone Number *</label>
-						<input type="tel" id="regPhone" name="phone" class="form-control"
-							placeholder="10-digit mobile number" value="{{ post.phone|default:'' }}" required>
+						<div class="form-control-feedback form-control-feedback-start">
+							<input type="tel" id="regPhone" name="phone" class="form-control"
+								placeholder="10-digit mobile number" value="{{ post.phone|default:'' }}" required>
+							<div class="form-control-feedback-icon">
+								<i class="ph-phone text-muted"></i>
+							</div>
+						</div>
 					</div>
 
 					<div class="mb-3">
 						<label class="form-label fw-semibold" for="aadhaar">Aadhaar Number *</label>
-						<input type="text" id="aadhaar" name="aadhaar_number" class="form-control"
-							placeholder="12-digit Aadhaar" maxlength="12" value="{{ post.aadhaar_number|default:'' }}" required>
+						<div class="form-control-feedback form-control-feedback-start">
+							<input type="text" id="aadhaar" name="aadhaar_number" class="form-control"
+								placeholder="12-digit Aadhaar" maxlength="12" value="{{ post.aadhaar_number|default:'' }}" required>
+							<div class="form-control-feedback-icon">
+								<i class="ph-identification-card text-muted"></i>
+							</div>
+						</div>
 						<div class="form-text text-muted">Used for identity verification only. Not publicly visible.</div>
 					</div>
 
 					<div class="mb-3">
 						<label class="form-label fw-semibold" for="regAddress">Address</label>
-						<textarea id="regAddress" name="address" class="form-control" rows="2"
-							placeholder="Your full address">{{ post.address|default:'' }}</textarea>
-					</div>
-
-					<!-- ── Agent-only fields ── -->
-					<div id="agentFields" style="display:none;">
-						<div class="border-top pt-3 mt-1 mb-3">
-							<p class="text-muted fw-semibold small mb-3" style="text-transform:uppercase; letter-spacing:.05em;">Agent Credentials</p>
-							<div class="mb-3">
-								<label class="form-label fw-semibold" for="employeeId">Employee ID *</label>
-								<input type="text" id="employeeId" name="employee_id" class="form-control"
-									value="{{ post.employee_id|default:'' }}">
-							</div>
-							<div class="mb-3">
-								<label class="form-label fw-semibold" for="designation">Designation *</label>
-								<input type="text" id="designation" name="designation" class="form-control"
-									placeholder="e.g. Field Verification Officer" value="{{ post.designation|default:'' }}">
+						<div class="form-control-feedback form-control-feedback-start">
+							<textarea id="regAddress" name="address" class="form-control" rows="2"
+								placeholder="Your full address" style="padding-left: 2.5rem;">{{ post.address|default:'' }}</textarea>
+							<div class="form-control-feedback-icon" style="top: 10px;">
+								<i class="ph-map-pin text-muted"></i>
 							</div>
 						</div>
 					</div>
@@ -167,6 +165,9 @@
 							<div class="form-control-feedback form-control-feedback-start" style="position: relative;">
 								<input type="password" id="regPassword" name="password" class="form-control"
 									placeholder="Min 8 characters" required style="padding-right: 2.5rem;">
+								<div class="form-control-feedback-icon">
+									<i class="ph-lock text-muted"></i>
+								</div>
 								<button type="button" class="btn btn-sm btn-link text-muted p-0 toggle-password" data-target="regPassword"
 									style="position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:5;">
 									<i class="ph-eye" style="font-size:1.1rem;"></i>
@@ -178,6 +179,9 @@
 							<div class="form-control-feedback form-control-feedback-start" style="position: relative;">
 								<input type="password" id="confirmPassword" name="confirm_password" class="form-control"
 									placeholder="Repeat password" required style="padding-right: 2.5rem;">
+								<div class="form-control-feedback-icon">
+									<i class="ph-lock text-muted"></i>
+								</div>
 								<button type="button" class="btn btn-sm btn-link text-muted p-0 toggle-password" data-target="confirmPassword"
 									style="position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:5;">
 									<i class="ph-eye" style="font-size:1.1rem;"></i>
@@ -205,9 +209,6 @@
 (function () {
 	// Role card toggle
 	const cards = document.querySelectorAll('.role-card');
-	const agentFields = document.getElementById('agentFields');
-	const employeeId  = document.getElementById('employeeId');
-	const designation = document.getElementById('designation');
 
 	function selectCard(card) {
 		cards.forEach(c => {
@@ -219,11 +220,6 @@
 
 		const radio = card.querySelector('.role-radio');
 		radio.checked = true;
-
-		const isAgent = (radio.value === 'AGENT');
-		agentFields.style.display = isAgent ? 'block' : 'none';
-		employeeId.required  = isAgent;
-		designation.required = isAgent;
 	}
 
 	cards.forEach(card => {

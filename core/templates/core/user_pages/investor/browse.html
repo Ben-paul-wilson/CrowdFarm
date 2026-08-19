@@ -30,37 +30,55 @@
       </select>
     </div>
     {% endif %}
+    <div>
+      <label class="form-label fw-semibold mb-1">Sort By</label>
+      <select name="sort" class="form-select" onchange="this.form.submit()">
+        <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Recent</option>
+        <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest</option>
+        <option value="most_investors" {% if sort_by == 'most_investors' %}selected{% endif %}>Most Investors</option>
+        <option value="least_investors" {% if sort_by == 'least_investors' %}selected{% endif %}>Least Investors</option>
+        <option value="most_value" {% if sort_by == 'most_value' %}selected{% endif %}>Highest Expected Profit</option>
+        <option value="least_value" {% if sort_by == 'least_value' %}selected{% endif %}>Lowest Expected Profit</option>
+        <option value="most_raise" {% if sort_by == 'most_raise' %}selected{% endif %}>Highest Target</option>
+        <option value="least_raise" {% if sort_by == 'least_raise' %}selected{% endif %}>Lowest Target</option>
+      </select>
+    </div>
     <button type="submit" class="btn btn-outline-success">Filter</button>
-    {% if filter_type or filter_state or agent_view == 'all' %}
+    {% if filter_type or filter_state or agent_view == 'all' or sort_by != 'recent' %}
     <a href="{% url 'investor_browse' %}" class="btn btn-outline-secondary">Clear</a>
     {% endif %}
   </form>
 
   {% if projects_data %}
-  <div class="row g-4">
+  <div class="d-flex flex-column gap-3">
     {% for item in projects_data %}
     {% with p=item.project %}
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-body p-4">
-          <div class="d-flex justify-content-between align-items-start mb-3">
+    <div class="card border-0 shadow-sm">
+      <div class="row g-0 align-items-center p-3 p-md-4">
+        
+        <!-- Left Section: Title & Details -->
+        <div class="col-md-4 mb-4 mb-md-0 pe-md-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
             <span class="badge {% if p.project_type == 'CROP' %}bg-success{% else %}bg-warning text-dark{% endif %}">
               {{ p.get_project_type_display }}
             </span>
             <small class="text-muted"><i class="ph-map-pin me-1"></i>{{ p.asset.district }}, {{ p.asset.state }}</small>
           </div>
           <h5 class="fw-bold mb-1">{{ p.title }}</h5>
-          <p class="text-muted small mb-3">{{ p.description|truncatewords:20 }}</p>
+          <p class="text-muted small mb-0">{{ p.description|truncatewords:15 }}</p>
+        </div>
 
+        <!-- Middle Section: Funding & Financials -->
+        <div class="col-md-5 mb-4 mb-md-0 px-md-4" style="border-left: 1px solid #eee; border-right: 1px solid #eee;">
           <div class="d-flex justify-content-between mb-1">
-            <small class="text-muted">Raised</small>
-            <small class="fw-semibold">₹{{ item.funded|floatformat:0 }} / ₹{{ p.funding_required|floatformat:0 }}</small>
+            <small class="text-muted">Raised: ₹{{ item.funded|floatformat:0 }}</small>
+            <small class="fw-semibold">Target: ₹{{ p.funding_required|floatformat:0 }}</small>
           </div>
-          <div class="progress mb-3" style="height:8px;">
-            <div class="progress-bar bg-success" style="width:{{ item.pct }}%;"></div>
+          <div class="progress mb-2" style="height: 8px;">
+            <div class="progress-bar bg-success progress-bar-fill" data-width="{{ item.pct }}%"></div>
           </div>
-
-          <div class="d-flex justify-content-between text-muted small mb-4">
+          
+          <div class="d-flex justify-content-between text-muted small mb-3">
             <span>{{ item.pct }}% funded</span>
             {% if p.max_investors %}
             <span>{{ item.slots_left }} slot{{ item.slots_left|pluralize }} left</span>
@@ -68,43 +86,55 @@
             <span>No limit</span>
             {% endif %}
           </div>
-
-          {% if p.evaluated_value %}
-          <div class="text-muted small mb-3"><i class="ph-tag me-1"></i>Evaluated: ₹{{ p.evaluated_value|floatformat:0 }}</div>
-          {% endif %}
-          {% if p.expected_profit %}
-          <div class="text-muted small mb-3"><i class="ph-trend-up me-1"></i>Expected Profit: ₹{{ p.expected_profit|floatformat:0 }}</div>
-          {% endif %}
-
-          {% if user.is_authenticated %}
-            {% if user.role == 'INVESTOR' %}
-            <a href="{% url 'investor_project_detail' p.id %}" class="btn btn-success w-100 fw-semibold">
-              Go Invest
-            </a>
-            {% elif user.role == 'AGENT' or user.role == 'ADMIN' %}
-            <a href="{% url 'agent_project_detail' p.id %}" class="btn btn-primary w-100 fw-semibold">
-              View Details
-            </a>
-            {% elif user.role == 'FARMER' %}
-            <a href="{% url 'farmer_project_detail' p.id %}" class="btn btn-primary w-100 fw-semibold">
-              View Details
-            </a>
+          
+          <div class="d-flex gap-4 text-muted small">
+            {% if p.evaluated_value %}
+            <div><i class="ph-tag me-1"></i>Val: ₹{{ p.evaluated_value|floatformat:0 }}</div>
             {% endif %}
-          {% else %}
-          <a href="{% url 'login' %}" class="btn btn-outline-success w-100">Login to Invest</a>
-          {% endif %}
+            {% if p.expected_profit %}
+            <div><i class="ph-trend-up me-1 text-success"></i>Profit: ₹{{ p.expected_profit|floatformat:0 }}</div>
+            {% endif %}
+          </div>
         </div>
-        <div class="card-footer bg-white border-0 text-muted small py-2 px-4">
-          <i class="ph-user me-1"></i>{{ p.asset.farmer.user.get_full_name|default:"Farmer" }}
-          {% if p.expected_sale_date %}
-          · <i class="ph-calendar me-1"></i>{{ p.expected_sale_date }}
-          {% endif %}
+
+        <!-- Right Section: Actions -->
+        <div class="col-md-3 text-md-end ps-md-4 d-flex flex-column justify-content-center">
+            {% if user.is_authenticated %}
+              {% if user.role == 'INVESTOR' %}
+              <a href="{% url 'investor_project_detail' p.id %}" class="btn btn-success fw-semibold mb-3">
+                Go Invest
+              </a>
+              {% elif user.role == 'AGENT' or user.role == 'ADMIN' %}
+              <a href="{% url 'agent_project_detail' p.id %}" class="btn btn-primary fw-semibold mb-3">
+                View Details
+              </a>
+              {% elif user.role == 'FARMER' %}
+              <a href="{% url 'farmer_project_detail' p.id %}" class="btn btn-primary fw-semibold mb-3">
+                View Details
+              </a>
+              {% endif %}
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-success fw-semibold mb-3">Login to Invest</a>
+            {% endif %}
+            
+            <div class="text-muted small">
+              <i class="ph-user me-1"></i>{{ p.asset.farmer.user.get_full_name|default:"Farmer" }}
+              {% if p.expected_sale_date %}
+              <br><i class="ph-calendar me-1 mt-1"></i>Sale: {{ p.expected_sale_date }}
+              {% endif %}
+            </div>
         </div>
+
       </div>
     </div>
     {% endwith %}
     {% endfor %}
   </div>
+  <script>
+    document.querySelectorAll('.progress-bar-fill').forEach(function(bar) {
+      bar.style.width = bar.getAttribute('data-width');
+    });
+  </script>
   {% else %}
   <div class="text-center py-5">
     <i class="ph-leaf text-muted" style="font-size:4rem;"></i>

@@ -19,6 +19,12 @@
 			overflow: visible !important;
 			display: block !important;
 		}
+		
+		/* Hide Edge/IE password reveal button because we use custom toggle */
+		input[type="password"]::-ms-reveal,
+		input[type="password"]::-ms-clear {
+			display: none;
+		}
 	</style>
 </head>
 
@@ -172,16 +178,20 @@
 						</div>
 					</li>
 					{% else %}
+					{% if request.resolver_match.url_name != 'register' %}
 					<li class="nav-item">
 						<a href="{% url 'register' %}" class="nav-link">
 							<i class="ph-user-plus me-1"></i> Register
 						</a>
 					</li>
+					{% endif %}
+					{% if request.resolver_match.url_name != 'login' %}
 					<li class="nav-item">
 						<a href="{% url 'login' %}" class="nav-link">
 							<i class="ph-sign-in me-1"></i> Login
 						</a>
 					</li>
+					{% endif %}
 					{% endif %}
 				</ul>
 
