@@ -2,9 +2,15 @@
 {% block title %}{{ asset.name }} — CrowdFarm{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <a href="{% url 'farmer_asset_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
-    <i class="ph-arrow-left me-1"></i> Back to Assets
-  </a>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{% url 'farmer_asset_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="ph-arrow-left me-1"></i> Back to Assets
+    </a>
+    <form method="post" action="{% url 'farmer_asset_delete' asset.id %}" onsubmit="return confirm('Are you sure you want to remove this asset?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ph-trash me-1"></i> Remove Asset</button>
+    </form>
+  </div>
 
   <div class="row g-4">
     <div class="col-md-5">
@@ -13,6 +19,9 @@
           <span class="badge {% if asset.asset_type == 'LAND' %}bg-success{% else %}bg-warning text-dark{% endif %} mb-3">
             {{ asset.get_asset_type_display }}
           </span>
+          {% if asset.status == 'SOLD' %}
+          <span class="badge bg-secondary mb-3 ms-1">Sold</span>
+          {% endif %}
           <h3 class="fw-bold">{{ asset.name }}</h3>
           <p class="text-muted"><i class="ph-map-pin me-1"></i>{{ asset.address }}</p>
           <hr>
@@ -35,9 +44,15 @@
           <p class="text-muted small">{{ asset.description }}</p>
           {% endif %}
           <hr>
+          {% if asset.status == 'ACTIVE' %}
           <a href="{% url 'farmer_project_create' %}?asset={{ asset.id }}" class="btn btn-success w-100">
             <i class="ph-plus me-1"></i> Submit Project for this Asset
           </a>
+          {% else %}
+          <div class="alert alert-secondary mb-0 small">
+            <i class="ph-info me-1"></i> This asset has been sold and can no longer be used for new projects.
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>

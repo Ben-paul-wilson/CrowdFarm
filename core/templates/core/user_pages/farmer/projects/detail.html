@@ -2,9 +2,17 @@
 {% block title %}{{ project.title }} — CrowdFarm{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <a href="{% url 'farmer_project_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
-    <i class="ph-arrow-left me-1"></i> Back to Projects
-  </a>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{% url 'farmer_project_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="ph-arrow-left me-1"></i> Back to Projects
+    </a>
+    {% if project.status == 'PENDING' or project.status == 'REJECTED' or project.status == 'COMPLETED' or project.status == 'VERIFICATION' or project.status == 'APPROVED' or project.status == 'SOLD' %}
+    <form method="post" action="{% url 'farmer_project_delete' project.id %}" onsubmit="return confirm('Are you sure you want to remove this project?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ph-trash me-1"></i> Remove Project</button>
+    </form>
+    {% endif %}
+  </div>
 
   <div class="row g-4">
     <!-- Left: Project Info -->
@@ -15,6 +23,10 @@
             <div>
               <span class="badge bg-secondary me-2">{{ project.get_project_type_display }}</span>
               {% if project.status == 'FUNDING' %}<span class="badge bg-success">Funding Open</span>
+              {% elif project.status == 'FUNDED' %}<span class="badge bg-success">Fully Funded</span>
+              {% elif project.status == 'IN_PROGRESS' %}<span class="badge bg-info">In Progress</span>
+              {% elif project.status == 'READY_FOR_SALE' %}<span class="badge" style="background:#f0a500;color:#000;">Ready for Sale</span>
+              {% elif project.status == 'SOLD' %}<span class="badge bg-primary">Sold</span>
               {% elif project.status == 'COMPLETED' %}<span class="badge bg-secondary">Completed</span>
               {% elif project.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
               {% elif project.status == 'PENDING' %}<span class="badge bg-warning text-dark">Pending Review</span>
@@ -107,12 +119,46 @@
 
     <!-- Right: Funding Status -->
     <div class="col-md-4">
+
+      {% if project.status == 'FUNDED' %}
+      <!-- ── Ready-to-Sell Action Card ── -->
+      <div class="card border-0 shadow-sm mb-3 overflow-hidden" style="border-left: 4px solid #f0a500 !important;">
+        <div style="background: linear-gradient(135deg,#fffbeb,#fff8d6); padding: 1.25rem 1.25rem 0.5rem;">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span style="font-size:1.4rem;">&#x1F33E;</span>
+            <h6 class="fw-bold mb-0">Ready to Sell?</h6>
+          </div>
+          <p class="text-muted small mb-3">
+            If your produce or asset is ready for market — even before the estimated date — you can notify your agent now. They will come to you, assess the sale, and confirm the amount.
+          </p>
+        </div>
+        <div class="card-body pt-3">
+          <a href="{% url 'farmer_mark_ready_to_sell' project.id %}" class="btn btn-warning w-100 fw-semibold" id="farmer-ready-to-sell-btn">
+            <i class="ph-storefront me-2"></i> Mark as Ready to Sell
+          </a>
+        </div>
+      </div>
+      {% elif project.status == 'READY_FOR_SALE' %}
+      <!-- ── Awaiting Agent Assessment Banner ── -->
+      <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #0ea5e9 !important; background:#f0f9ff;">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="ph-clock text-info fs-5"></i>
+            <h6 class="fw-bold mb-0 text-info">Awaiting Agent Assessment</h6>
+          </div>
+          <p class="text-muted small mb-0">
+            You have marked this project as Ready for Sale. Your assigned agent will contact you shortly to assess and confirm the sale amount.
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
       <div class="card border-0 shadow-sm mb-3">
         <div class="card-body p-4">
           <h6 class="fw-bold mb-3">Funding Status</h6>
           <div class="text-center mb-3">
-            <div class="fs-2 fw-bold text-success">₹{{ total_funded|floatformat:0 }}</div>
-            <div class="text-muted small">of ₹{{ project.funding_required|floatformat:0 }} raised</div>
+            <div class="fs-2 fw-bold text-success">&#8377;{{ total_funded|floatformat:0 }}</div>
+            <div class="text-muted small">of &#8377;{{ project.funding_required|floatformat:0 }} raised</div>
           </div>
           <div class="progress mb-2" style="height:10px;">
             <div class="progress-bar bg-success" style="width:{{ funding_pct }}%"></div>
@@ -125,7 +171,7 @@
           <div class="text-muted small"><i class="ph-calendar me-1"></i> Expected sale: {{ project.expected_sale_date }}</div>
           {% endif %}
           {% if project.evaluated_value %}
-          <div class="text-muted small"><i class="ph-tag me-1"></i> Evaluated value: ₹{{ project.evaluated_value|floatformat:0 }}</div>
+          <div class="text-muted small"><i class="ph-tag me-1"></i> Evaluated value: &#8377;{{ project.evaluated_value|floatformat:0 }}</div>
           {% endif %}
         </div>
       </div>

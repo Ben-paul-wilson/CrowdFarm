@@ -165,8 +165,8 @@ def register(request):
 def farmer_dashboard(request):
     profile = get_object_or_404(FarmerProfile, user=request.user)
     wallet, _ = FarmerWallet.objects.get_or_create(farmer=profile)
-    assets = Asset.objects.filter(farmer=profile)
-    projects = Project.objects.filter(asset__farmer=profile).order_by('-created_at')
+    assets = Asset.objects.filter(farmer=profile, is_deleted=False)
+    projects = Project.objects.filter(asset__farmer=profile, is_deleted=False).order_by('-created_at')
     active_projects = projects.filter(status__in=['FUNDING', 'FUNDED', 'IN_PROGRESS'])
     ctx = {
         'profile': profile,
@@ -183,7 +183,7 @@ def farmer_dashboard(request):
 @role_required('FARMER')
 def farmer_asset_list(request):
     profile = get_object_or_404(FarmerProfile, user=request.user)
-    assets = Asset.objects.filter(farmer=profile).annotate(project_count=Count('projects'))
+    assets = Asset.objects.filter(farmer=profile, is_deleted=False).annotate(project_count=Count('projects'))
     return render(request, 'core/user_pages/farmer/assets/list.html', {'assets': assets})
 
 
@@ -219,15 +219,26 @@ def farmer_asset_create(request):
 @role_required('FARMER')
 def farmer_asset_detail(request, asset_id):
     profile = get_object_or_404(FarmerProfile, user=request.user)
-    asset = get_object_or_404(Asset, id=asset_id, farmer=profile)
-    projects = Project.objects.filter(asset=asset).order_by('-created_at')
+    asset = get_object_or_404(Asset, id=asset_id, farmer=profile, is_deleted=False)
+    projects = Project.objects.filter(asset=asset, is_deleted=False).order_by('-created_at')
     return render(request, 'core/user_pages/farmer/assets/detail.html', {'asset': asset, 'projects': projects})
+
+@role_required('FARMER')
+def farmer_asset_delete(request, asset_id):
+    profile = get_object_or_404(FarmerProfile, user=request.user)
+    asset = get_object_or_404(Asset, id=asset_id, farmer=profile)
+    if request.method == 'POST':
+        asset.is_deleted = True
+        asset.save()
+        messages.success(request, 'Asset removed.')
+        return redirect('farmer_asset_list')
+    return redirect('farmer_asset_detail', asset_id=asset.id)
 
 
 @role_required('FARMER')
 def farmer_project_create(request):
     profile = get_object_or_404(FarmerProfile, user=request.user)
-    assets = Asset.objects.filter(farmer=profile)
+    assets = Asset.objects.filter(farmer=profile, status='ACTIVE', is_deleted=False)
 
     if request.method == 'POST':
         asset_id = request.POST.get('asset')
@@ -243,6 +254,10 @@ def farmer_project_create(request):
             return render(request, 'core/user_pages/farmer/projects/create.html', {'assets': assets, 'post': request.POST})
 
         asset = get_object_or_404(Asset, id=asset_id, farmer=profile)
+        if asset.status != 'ACTIVE':
+            messages.error(request, 'This asset is no longer active and cannot be used for new projects.')
+            return render(request, 'core/user_pages/farmer/projects/create.html', {'assets': assets, 'post': request.POST})
+        
         try:
             with transaction.atomic():
                 project = Project.objects.create(
@@ -289,8 +304,50 @@ def farmer_project_detail(request, project_id):
 @role_required('FARMER')
 def farmer_project_list(request):
     profile = get_object_or_404(FarmerProfile, user=request.user)
-    projects = Project.objects.filter(asset__farmer=profile).order_by('-created_at')
+    projects = Project.objects.filter(asset__farmer=profile, is_deleted=False).order_by('-created_at')
     return render(request, 'core/user_pages/farmer/projects/list.html', {'projects': projects})
+
+@role_required('FARMER')
+def farmer_project_delete(request, project_id):
+    profile = get_object_or_404(FarmerProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, asset__farmer=profile)
+    if request.method == 'POST':
+        # Only allow deleting if project is NOT active
+        if project.status in ['FUNDING', 'FUNDED', 'IN_PROGRESS', 'READY_FOR_SALE']:
+            messages.error(request, 'You cannot remove an active project. Please wait until it is completed.')
+        else:
+            project.is_deleted = True
+            project.save()
+            messages.success(request, 'Project removed.')
+            return redirect('farmer_project_list')
+    return redirect('farmer_project_detail', project_id=project.id)
+
+
+@role_required('FARMER')
+def farmer_mark_ready_to_sell(request, project_id):
+    """Farmer signals that the produce/asset is ready to be sold.
+    Only valid when the project is in FUNDED status.
+    Sets status to READY_FOR_SALE so the assigned agent gets alerted."""
+    profile = get_object_or_404(FarmerProfile, user=request.user)
+    project = get_object_or_404(Project, id=project_id, asset__farmer=profile)
+
+    if project.status != 'FUNDED':
+        messages.error(request, 'Only funded projects can be marked as ready to sell.')
+        return redirect('farmer_project_detail', project_id=project.id)
+
+    if request.method == 'POST':
+        project.status = 'READY_FOR_SALE'
+        project.save()
+        messages.success(
+            request,
+            'Your project has been marked as Ready for Sale. '
+            'Your assigned agent will be notified and will come to assess the sale with you.'
+        )
+        return redirect('farmer_project_detail', project_id=project.id)
+
+    # GET: show a confirmation page
+    return render(request, 'core/user_pages/farmer/projects/ready_to_sell_confirm.html', {'project': project})
+
 
 
 @role_required('FARMER')
@@ -587,7 +644,10 @@ def agent_project_detail(request, project_id):
     pct = int(funded / project.funding_required * 100) if project.funding_required else 0
     can_verify = project.assigned_agent == profile and not project.verifications.filter(agent=profile).exists()
     can_valuate = project.assigned_agent == profile and not project.valuations.filter(agent=profile).exists()
+    # can_sell: agent-driven path from IN_PROGRESS (they can always record a sale from IN_PROGRESS or READY_FOR_SALE)
     can_sell = project.status in ['IN_PROGRESS', 'READY_FOR_SALE'] and project.assigned_agent == profile
+    # farmer_ready: farmer specifically triggered READY_FOR_SALE — show the "go assess with farmer" banner
+    farmer_ready = project.status == 'READY_FOR_SALE' and project.assigned_agent == profile
     has_sale = hasattr(project, 'sale')
     ctx = {
         'project': project,
@@ -600,6 +660,7 @@ def agent_project_detail(request, project_id):
         'can_verify': can_verify,
         'can_valuate': can_valuate,
         'can_sell': can_sell,
+        'farmer_ready': farmer_ready,
         'has_sale': has_sale,
     }
     return render(request, 'core/user_pages/agent/projects/detail.html', ctx)
@@ -777,6 +838,10 @@ def agent_record_sale(request, project_id):
 
                 project.status = 'COMPLETED'
                 project.save()
+
+                if project.asset.asset_type == 'CATTLE':
+                    project.asset.status = 'SOLD'
+                    project.asset.save()
 
             messages.success(request, 'Sale recorded and profits distributed!')
             return redirect('agent_project_detail', project_id=project.id)

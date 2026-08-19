@@ -125,6 +125,11 @@ class Asset(models.Model):
         ('CATTLE', 'Cattle'),
     )
 
+    STATUS_CHOICES = (
+        ('ACTIVE', 'Active'),
+        ('SOLD', 'Sold'),
+    )
+
     farmer = models.ForeignKey(
         FarmerProfile,
         on_delete=models.CASCADE,
@@ -134,6 +139,12 @@ class Asset(models.Model):
     asset_type = models.CharField(
         max_length=20,
         choices=ASSET_TYPES
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='ACTIVE'
     )
 
     name = models.CharField(
@@ -174,6 +185,10 @@ class Asset(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True
+    )
+
+    is_deleted = models.BooleanField(
+        default=False
     )
 
     def __str__(self):
@@ -266,6 +281,10 @@ class Project(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True
+    )
+
+    is_deleted = models.BooleanField(
+        default=False
     )
 
     def __str__(self):

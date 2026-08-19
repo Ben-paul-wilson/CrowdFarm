@@ -44,7 +44,17 @@
               {% endif %}
             </td>
             <td class="text-muted small">{{ p.created_at|date:"d M Y" }}</td>
-            <td><a href="{% url 'farmer_project_detail' p.id %}" class="btn btn-sm btn-outline-secondary">View</a></td>
+            <td>
+              <div class="d-flex gap-2">
+                <a href="{% url 'farmer_project_detail' p.id %}" class="btn btn-sm btn-outline-secondary">View</a>
+                {% if p.status == 'PENDING' or p.status == 'REJECTED' or p.status == 'COMPLETED' or p.status == 'VERIFICATION' or p.status == 'APPROVED' or p.status == 'SOLD' %}
+                <form method="post" action="{% url 'farmer_project_delete' p.id %}" onsubmit="return confirm('Are you sure you want to remove this project from your view?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove Project"><i class="ph-trash"></i></button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
           </tr>
           {% endfor %}
         </tbody>

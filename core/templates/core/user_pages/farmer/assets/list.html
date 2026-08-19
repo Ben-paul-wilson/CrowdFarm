@@ -16,13 +16,16 @@
   <div class="row g-3">
     {% for asset in assets %}
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-0 shadow-sm h-100 {% if asset.status == 'SOLD' %}opacity-75{% endif %}">
         <div class="card-body">
           <div class="d-flex align-items-start justify-content-between mb-3">
             <div>
               <span class="badge {% if asset.asset_type == 'LAND' %}bg-success{% else %}bg-warning text-dark{% endif %} mb-2">
                 {{ asset.get_asset_type_display }}
               </span>
+              {% if asset.status == 'SOLD' %}
+              <span class="badge bg-secondary mb-2 ms-1">Sold</span>
+              {% endif %}
               <h5 class="fw-bold mb-1">{{ asset.name }}</h5>
               <p class="text-muted small mb-0"><i class="ph-map-pin me-1"></i>{{ asset.district }}, {{ asset.state }}</p>
             </div>
@@ -32,7 +35,13 @@
           {% endif %}
           <div class="d-flex justify-content-between align-items-center mt-auto">
             <span class="text-muted small">{{ asset.project_count }} project{{ asset.project_count|pluralize }}</span>
-            <a href="{% url 'farmer_asset_detail' asset.id %}" class="btn btn-sm btn-outline-success">View Details</a>
+            <div class="d-flex gap-2">
+              <a href="{% url 'farmer_asset_detail' asset.id %}" class="btn btn-sm btn-outline-success">View Details</a>
+              <form method="post" action="{% url 'farmer_asset_delete' asset.id %}" onsubmit="return confirm('Are you sure you want to remove this asset from your view?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove Asset"><i class="ph-trash"></i></button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

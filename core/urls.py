@@ -19,10 +19,13 @@ urlpatterns = [
     path('farmer/assets/', views.farmer_asset_list, name='farmer_asset_list'),
     path('farmer/assets/add/', views.farmer_asset_create, name='farmer_asset_create'),
     path('farmer/assets/<int:asset_id>/', views.farmer_asset_detail, name='farmer_asset_detail'),
+    path('farmer/assets/<int:asset_id>/delete/', views.farmer_asset_delete, name='farmer_asset_delete'),
     path('farmer/projects/', views.farmer_project_list, name='farmer_project_list'),
     path('farmer/projects/submit/', views.farmer_project_create, name='farmer_project_create'),
     path('farmer/projects/<int:project_id>/', views.farmer_project_detail, name='farmer_project_detail'),
+    path('farmer/projects/<int:project_id>/delete/', views.farmer_project_delete, name='farmer_project_delete'),
     path('farmer/wallet/', views.farmer_wallet, name='farmer_wallet'),
+    path('farmer/projects/<int:project_id>/ready-to-sell/', views.farmer_mark_ready_to_sell, name='farmer_mark_ready_to_sell'),
 
     # ── Investor ─────────────────────────────────
     path('investor/dashboard/', views.investor_dashboard, name='investor_dashboard'),

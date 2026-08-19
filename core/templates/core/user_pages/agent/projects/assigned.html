@@ -21,8 +21,13 @@
         </thead>
         <tbody>
           {% for p in projects %}
-          <tr>
-            <td class="ps-4 fw-semibold">{{ p.title }}</td>
+          <tr {% if p.status == 'READY_FOR_SALE' %}style="background:#fffbeb;"{% endif %}>
+            <td class="ps-4 fw-semibold">
+              {{ p.title }}
+              {% if p.status == 'READY_FOR_SALE' %}
+              <span class="ms-2 badge" style="background:#fef3c7;color:#92400e;font-size:0.65rem;animation:pulse 1.5s infinite;">&#x1F33E; Farmer Ready!</span>
+              {% endif %}
+            </td>
             <td class="text-muted small">{{ p.asset.farmer.user.get_full_name }}</td>
             <td class="text-muted small">{{ p.asset.district }}, {{ p.asset.state }}</td>
             <td><span class="badge bg-light text-dark">{{ p.get_project_type_display }}</span></td>
@@ -30,12 +35,20 @@
               {% if p.status == 'VERIFICATION' %}<span class="badge bg-info">Verification</span>
               {% elif p.status == 'APPROVED' %}<span class="badge bg-primary">Approved</span>
               {% elif p.status == 'FUNDING' %}<span class="badge bg-success">Funding</span>
+              {% elif p.status == 'FUNDED' %}<span class="badge bg-success">Fully Funded</span>
               {% elif p.status == 'IN_PROGRESS' %}<span class="badge bg-primary">In Progress</span>
+              {% elif p.status == 'READY_FOR_SALE' %}<span class="badge" style="background:#f0a500;color:#000;">Ready for Sale</span>
               {% elif p.status == 'COMPLETED' %}<span class="badge bg-secondary">Completed</span>
               {% else %}<span class="badge bg-light text-dark">{{ p.get_status_display }}</span>{% endif %}
             </td>
-            <td>₹{{ p.funding_required|floatformat:0 }}</td>
-            <td><a href="{% url 'agent_project_detail' p.id %}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+            <td>&#8377;{{ p.funding_required|floatformat:0 }}</td>
+            <td>
+              {% if p.status == 'READY_FOR_SALE' %}
+              <a href="{% url 'agent_project_detail' p.id %}" class="btn btn-sm fw-semibold" style="background:#f0a500;color:#000;border:none;">&#x1F91D; Assess Sale</a>
+              {% else %}
+              <a href="{% url 'agent_project_detail' p.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
