@@ -17,3 +17,12 @@
 - **Strict Funding Caps**: Implemented backend validation in `views.py` and frontend limits to ensure an investor can never invest an amount that pushes a project past its target funding goal.
 - **Input Validation**: Added Javascript to actively block users from typing minus signs (`-`), plus signs, or numbers exceeding the maximum cap into the investment input box.
 - **Professional Agent Verification UI**: Redesigned the "Agent Verified" section on the investment page to use a clean, modern layout with tinted backgrounds and professional status icons instead of plain text emojis.
+
+**Farmer Portal & Project Lifecycle**
+- **Ready-to-Sell Flow**: Implemented a dedicated "Ready to Sell" button for farmers to signal when a funded project is ready to be liquidated, automatically updating the status and alerting the assigned agent.
+- **Cattle Sales Requirement**: Added logic to automatically mark `CATTLE` assets as 'SOLD' when their project sale is completed. Added backend validation to block sold cattle from being reused in new projects, and updated the UI to dim sold cattle cards and display "Sold" badges.
+- **Soft Delete for Assets & Projects**: Introduced an `is_deleted` field to safely "hide" assets and projects from the farmer's view without deleting the underlying historical data or agent logs. Implemented safety checks to prevent farmers from hiding active projects.
+
+**Financial Distribution & Security**
+- **Principal-First Profit Logic**: Completely refactored the backend profit distribution algorithm inside `agent_record_sale` into a dedicated `process_sale_distribution` function. The new logic guarantees investors recover 100% of their principal (Scenario A) or take the entire net revenue (Scenario B) before any profits are distributed to the farmer or platform.
+- **Historical Data Migration**: Created and executed `scripts/fix_historical_sales.py` to automatically reverse the incorrect distributions for previously completed sales and migrate all users' wallet balances to strictly align with the new Principal-First mathematical model.

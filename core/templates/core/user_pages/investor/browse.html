@@ -104,8 +104,12 @@
               <a href="{% url 'investor_project_detail' p.id %}" class="btn btn-success fw-semibold mb-3">
                 Go Invest
               </a>
-              {% elif user.role == 'AGENT' or user.role == 'ADMIN' %}
+              {% elif user.role == 'AGENT' %}
               <a href="{% url 'agent_project_detail' p.id %}" class="btn btn-primary fw-semibold mb-3">
+                View Details
+              </a>
+              {% elif user.role == 'ADMIN' %}
+              <a href="{% url 'admin_project_detail' p.id %}" class="btn btn-primary fw-semibold mb-3">
                 View Details
               </a>
               {% elif user.role == 'FARMER' %}

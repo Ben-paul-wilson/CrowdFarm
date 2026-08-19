@@ -36,21 +36,7 @@
             placeholder="e.g. Rabi Wheat Crop 2025" value="{{ post.title|default:'' }}" required>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Project Type *</label>
-          <div class="d-flex gap-3">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="project_type" id="typeCrop" value="CROP"
-                {% if post.project_type == 'CROP' or not post %}checked{% endif %} required>
-              <label class="form-check-label" for="typeCrop">🌾 Crop</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="project_type" id="typeCattle" value="CATTLE"
-                {% if post.project_type == 'CATTLE' %}checked{% endif %}>
-              <label class="form-check-label" for="typeCattle">🐄 Cattle</label>
-            </div>
-          </div>
-        </div>
+
 
         <div class="mb-3">
           <label class="form-label fw-semibold" for="projDesc">Description *</label>

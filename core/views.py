@@ -184,7 +184,22 @@ def farmer_dashboard(request):
 def farmer_asset_list(request):
     profile = get_object_or_404(FarmerProfile, user=request.user)
     assets = Asset.objects.filter(farmer=profile, is_deleted=False).annotate(project_count=Count('projects'))
-    return render(request, 'core/user_pages/farmer/assets/list.html', {'assets': assets})
+    
+    sort_by = request.GET.get('sort', 'recent')
+    if sort_by == 'oldest':
+        assets = assets.order_by('created_at')
+    elif sort_by == 'name_asc':
+        assets = assets.order_by('name')
+    elif sort_by == 'name_desc':
+        assets = assets.order_by('-name')
+    elif sort_by == 'most_projects':
+        assets = assets.order_by('-project_count', '-created_at')
+    elif sort_by == 'least_projects':
+        assets = assets.order_by('project_count', '-created_at')
+    else:
+        assets = assets.order_by('-created_at')
+        
+    return render(request, 'core/user_pages/farmer/assets/list.html', {'assets': assets, 'sort_by': sort_by})
 
 
 @role_required('FARMER')
@@ -243,13 +258,12 @@ def farmer_project_create(request):
     if request.method == 'POST':
         asset_id = request.POST.get('asset')
         title = request.POST.get('title', '').strip()
-        project_type = request.POST.get('project_type', '')
         description = request.POST.get('description', '').strip()
         funding_required = request.POST.get('funding_required', '')
         max_investors = request.POST.get('max_investors', 3)
         expected_sale_date = request.POST.get('expected_sale_date') or None
 
-        if not all([asset_id, title, project_type, description, funding_required]):
+        if not all([asset_id, title, description, funding_required]):
             messages.error(request, 'Please fill all required fields.')
             return render(request, 'core/user_pages/farmer/projects/create.html', {'assets': assets, 'post': request.POST})
 
@@ -257,6 +271,8 @@ def farmer_project_create(request):
         if asset.status != 'ACTIVE':
             messages.error(request, 'This asset is no longer active and cannot be used for new projects.')
             return render(request, 'core/user_pages/farmer/projects/create.html', {'assets': assets, 'post': request.POST})
+            
+        project_type = 'CROP' if asset.asset_type == 'LAND' else 'CATTLE'
         
         try:
             with transaction.atomic():
@@ -741,6 +757,99 @@ def agent_update_project_status(request, project_id):
     return redirect('agent_project_detail', project_id=project.id)
 
 
+def process_sale_distribution(sale, farmer_pct=Decimal('0.60'), investor_pct=Decimal('0.30'), company_pct=Decimal('0.10')):
+    project = sale.project
+    net_revenue = sale.net_amount
+    funding_required = project.funding_required
+
+    if net_revenue > funding_required:
+        # Scenario A: Profitable
+        net_profit = net_revenue - funding_required
+        farmer_amount = (net_profit * farmer_pct).quantize(Decimal('0.01'))
+        investors_profit_amount = (net_profit * investor_pct).quantize(Decimal('0.01'))
+        company_amount = (net_profit * company_pct).quantize(Decimal('0.01'))
+        investors_pool = funding_required + investors_profit_amount
+    else:
+        # Scenario B: Loss / Break-Even
+        net_profit = Decimal('0.00')
+        farmer_amount = Decimal('0.00')
+        investors_profit_amount = Decimal('0.00')
+        company_amount = Decimal('0.00')
+        investors_pool = net_revenue
+
+    dist = ProfitDistribution.objects.create(
+        sale=sale,
+        farmer_amount=farmer_amount,
+        investors_amount=investors_profit_amount,
+        company_amount=company_amount,
+        total_distributed=farmer_amount + investors_profit_amount + company_amount,
+    )
+
+    # Pay farmer
+    if farmer_amount > 0:
+        farmer_profile = project.asset.farmer
+        farmer_wallet, _ = FarmerWallet.objects.get_or_create(farmer=farmer_profile)
+        farmer_wallet.balance += farmer_amount
+        farmer_wallet.save()
+        FarmerWalletTransaction.objects.create(
+            wallet=farmer_wallet,
+            transaction_type='PROJECT_PROFIT',
+            amount=farmer_amount,
+            project=project,
+            description=f'Profit from sale of {project.title}',
+        )
+
+    # Pay investors proportionally
+    investments = Investment.objects.filter(project=project, status='ACTIVE')
+    for inv in investments:
+        share_percentage = inv.amount / funding_required
+        
+        if net_revenue > funding_required:
+            principal_return = inv.amount
+            profit_return = (investors_profit_amount * share_percentage).quantize(Decimal('0.01'))
+        else:
+            principal_return = (investors_pool * share_percentage).quantize(Decimal('0.01'))
+            profit_return = Decimal('0.00')
+            
+        total_return = principal_return + profit_return
+        
+        inv_wallet, _ = InvestorWallet.objects.get_or_create(investor=inv.investor)
+        inv_wallet.balance += total_return
+        inv_wallet.save()
+        
+        InvestorWalletTransaction.objects.create(
+            wallet=inv_wallet,
+            transaction_type='RETURN',
+            amount=total_return,
+            investment=inv,
+            description=f'Return from {project.title}',
+        )
+        InvestorDistribution.objects.create(
+            distribution=dist,
+            investment=inv,
+            principal_return=principal_return,
+            profit_return=profit_return,
+        )
+        inv.actual_return = profit_return
+        inv.status = 'RETURNED'
+        inv.save()
+
+    # Credit company
+    if company_amount > 0:
+        company_account, _ = CompanyAccount.objects.get_or_create(
+            account_name='Main', defaults={'balance': 0}
+        )
+        company_account.balance += company_amount
+        company_account.save()
+        CompanyTransaction.objects.create(
+            account=company_account,
+            transaction_type='PROJECT_INCOME',
+            amount=company_amount,
+            project=project,
+            description=f'Company share from {project.title}',
+        )
+
+
 @role_required('AGENT', 'ADMIN')
 def agent_record_sale(request, project_id):
     profile = get_object_or_404(AgentProfile, user=request.user)
@@ -766,75 +875,13 @@ def agent_record_sale(request, project_id):
             investor_pct = Decimal(request.POST.get('investor_pct', '30')) / 100
             company_pct = Decimal(request.POST.get('company_pct', '10')) / 100
 
-            farmer_amount = (net * farmer_pct).quantize(Decimal('0.01'))
-            investors_total = (net * investor_pct).quantize(Decimal('0.01'))
-            company_amount = (net * company_pct).quantize(Decimal('0.01'))
-
             with transaction.atomic():
                 sale = Sale.objects.create(
                     project=project, agent=profile,
                     sale_date=sale_date, gross_sale_amount=gross_dec,
                     expenses=expenses_dec, net_amount=net, remarks=remarks,
                 )
-                dist = ProfitDistribution.objects.create(
-                    sale=sale,
-                    farmer_amount=farmer_amount,
-                    investors_amount=investors_total,
-                    company_amount=company_amount,
-                    total_distributed=farmer_amount + investors_total + company_amount,
-                )
-
-                # Pay farmer
-                farmer_profile = project.asset.farmer
-                farmer_wallet, _ = FarmerWallet.objects.get_or_create(farmer=farmer_profile)
-                farmer_wallet.balance += farmer_amount
-                farmer_wallet.save()
-                FarmerWalletTransaction.objects.create(
-                    wallet=farmer_wallet,
-                    transaction_type='PROJECT_PROFIT',
-                    amount=farmer_amount,
-                    project=project,
-                    description=f'Profit from sale of {project.title}',
-                )
-
-                # Pay investors proportionally
-                investments = Investment.objects.filter(project=project, status='ACTIVE')
-                total_inv = investments.aggregate(t=Sum('amount'))['t'] or Decimal('1')
-                for inv in investments:
-                    share = (inv.amount / total_inv * investors_total).quantize(Decimal('0.01'))
-                    inv_wallet, _ = InvestorWallet.objects.get_or_create(investor=inv.investor)
-                    inv_wallet.balance += (inv.amount + share)  # return principal + profit
-                    inv_wallet.save()
-                    InvestorWalletTransaction.objects.create(
-                        wallet=inv_wallet,
-                        transaction_type='RETURN',
-                        amount=inv.amount + share,
-                        investment=inv,
-                        description=f'Return from {project.title}',
-                    )
-                    InvestorDistribution.objects.create(
-                        distribution=dist,
-                        investment=inv,
-                        principal_return=inv.amount,
-                        profit_return=share,
-                    )
-                    inv.actual_return = share
-                    inv.status = 'RETURNED'
-                    inv.save()
-
-                # Credit company
-                company_account, _ = CompanyAccount.objects.get_or_create(
-                    account_name='Main', defaults={'balance': 0}
-                )
-                company_account.balance += company_amount
-                company_account.save()
-                CompanyTransaction.objects.create(
-                    account=company_account,
-                    transaction_type='PROJECT_INCOME',
-                    amount=company_amount,
-                    project=project,
-                    description=f'Company share from {project.title}',
-                )
+                process_sale_distribution(sale, farmer_pct, investor_pct, company_pct)
 
                 project.status = 'COMPLETED'
                 project.save()
@@ -927,12 +974,14 @@ def admin_user_detail(request, user_id):
     investor_transactions = []
     investments = []
     projects = []
+    assets = []
 
     if farmer_profile:
         farmer_wallet = getattr(farmer_profile, 'wallet', None)
         if farmer_wallet:
             farmer_transactions = farmer_wallet.transactions.order_by('-created_at')[:10]
         projects = Project.objects.filter(asset__farmer=farmer_profile).order_by('-created_at')
+        assets = Asset.objects.filter(farmer=farmer_profile).order_by('-created_at')
 
     if investor_profile:
         investor_wallet = getattr(investor_profile, 'wallet', None)
@@ -955,6 +1004,7 @@ def admin_user_detail(request, user_id):
         'investor_transactions': investor_transactions,
         'investments': investments,
         'projects': projects,
+        'assets': assets,
         'agent_projects': agent_projects,
         'bank_accounts': target_user.bank_accounts.all(),
     }
