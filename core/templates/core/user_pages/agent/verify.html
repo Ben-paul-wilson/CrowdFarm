@@ -15,12 +15,12 @@
 
         <div class="mb-3">
           <label class="form-label fw-semibold" for="inspDate">Inspection Date & Time *</label>
-          <input type="datetime-local" id="inspDate" name="inspection_date" class="form-control" required>
+          <input type="datetime-local" id="inspDate" name="inspection_date" class="form-control" value="{{ verification.inspection_date|date:'Y-m-d\TH:i' }}" required>
         </div>
 
         <div class="mb-3">
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="ownershipVerified" name="ownership_verified">
+            <input class="form-check-input" type="checkbox" id="ownershipVerified" name="ownership_verified" {% if verification.ownership_verified %}checked{% endif %}>
             <label class="form-check-label fw-semibold" for="ownershipVerified">
               Ownership documents verified
             </label>
@@ -30,7 +30,7 @@
 
         <div class="mb-4">
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="physicalVerified" name="physical_verified">
+            <input class="form-check-input" type="checkbox" id="physicalVerified" name="physical_verified" {% if verification.physical_verified %}checked{% endif %}>
             <label class="form-check-label fw-semibold" for="physicalVerified">
               Physical asset verified on-site
             </label>
@@ -42,15 +42,15 @@
           <label class="form-label fw-semibold">Decision *</label>
           <div class="d-flex gap-3">
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="decision" id="decPending" value="PENDING" checked required>
+              <input class="form-check-input" type="radio" name="decision" id="decPending" value="PENDING" {% if not verification or verification.decision == 'PENDING' %}checked{% endif %} required>
               <label class="form-check-label" for="decPending">⏳ Pending</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="decision" id="decApproved" value="APPROVED">
+              <input class="form-check-input" type="radio" name="decision" id="decApproved" value="APPROVED" {% if verification.decision == 'APPROVED' %}checked{% endif %}>
               <label class="form-check-label text-success fw-semibold" for="decApproved">✅ Approve</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="decision" id="decRejected" value="REJECTED">
+              <input class="form-check-input" type="radio" name="decision" id="decRejected" value="REJECTED" {% if verification.decision == 'REJECTED' %}checked{% endif %}>
               <label class="form-check-label text-danger fw-semibold" for="decRejected">❌ Reject</label>
             </div>
           </div>
@@ -59,7 +59,7 @@
         <div class="mb-4">
           <label class="form-label fw-semibold" for="remarks">Remarks</label>
           <textarea id="remarks" name="remarks" class="form-control" rows="4"
-            placeholder="Any observations, discrepancies, or notes..."></textarea>
+            placeholder="Any observations, discrepancies, or notes...">{{ verification.remarks }}</textarea>
         </div>
 
         <div class="d-flex gap-2">

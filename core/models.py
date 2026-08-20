@@ -546,6 +546,9 @@ class FarmerWalletTransaction(models.Model):
         auto_now_add=True
     )
     
+    def __str__(self):
+            return self.wallet.farmer.user.username
+    
 class CompanyTransaction(models.Model):
 
     TRANSACTION_TYPES = (

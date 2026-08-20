@@ -236,7 +236,13 @@ def farmer_asset_detail(request, asset_id):
     profile = get_object_or_404(FarmerProfile, user=request.user)
     asset = get_object_or_404(Asset, id=asset_id, farmer=profile, is_deleted=False)
     projects = Project.objects.filter(asset=asset, is_deleted=False).order_by('-created_at')
-    return render(request, 'core/user_pages/farmer/assets/detail.html', {'asset': asset, 'projects': projects})
+    active_statuses = ['PENDING', 'APPROVED', 'FUNDING', 'FUNDED', 'IN_PROGRESS', 'READY_FOR_SALE']
+    has_active_project = projects.filter(status__in=active_statuses).exists()
+    return render(request, 'core/user_pages/farmer/assets/detail.html', {
+        'asset': asset, 
+        'projects': projects,
+        'has_active_project': has_active_project
+    })
 
 @role_required('FARMER')
 def farmer_asset_delete(request, asset_id):
@@ -253,7 +259,9 @@ def farmer_asset_delete(request, asset_id):
 @role_required('FARMER')
 def farmer_project_create(request):
     profile = get_object_or_404(FarmerProfile, user=request.user)
-    assets = Asset.objects.filter(farmer=profile, status='ACTIVE', is_deleted=False)
+    # Only show active assets that do NOT have an active project
+    active_statuses = ['PENDING', 'APPROVED', 'FUNDING', 'FUNDED', 'IN_PROGRESS', 'READY_FOR_SALE']
+    assets = Asset.objects.filter(farmer=profile, status='ACTIVE', is_deleted=False).exclude(projects__status__in=active_statuses).distinct()
 
     if request.method == 'POST':
         asset_id = request.POST.get('asset')
@@ -270,6 +278,10 @@ def farmer_project_create(request):
         asset = get_object_or_404(Asset, id=asset_id, farmer=profile)
         if asset.status != 'ACTIVE':
             messages.error(request, 'This asset is no longer active and cannot be used for new projects.')
+            return render(request, 'core/user_pages/farmer/projects/create.html', {'assets': assets, 'post': request.POST})
+            
+        if asset.projects.filter(status__in=active_statuses).exists():
+            messages.error(request, 'This asset already has an active project. You must wait for it to complete or be cancelled.')
             return render(request, 'core/user_pages/farmer/projects/create.html', {'assets': assets, 'post': request.POST})
             
         project_type = 'CROP' if asset.asset_type == 'LAND' else 'CATTLE'
@@ -658,8 +670,8 @@ def agent_project_detail(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     funded = project.investments.aggregate(t=Sum('amount'))['t'] or Decimal('0')
     pct = int(funded / project.funding_required * 100) if project.funding_required else 0
-    can_verify = project.assigned_agent == profile and not project.verifications.filter(agent=profile).exists()
-    can_valuate = project.assigned_agent == profile and not project.valuations.filter(agent=profile).exists()
+    can_verify = project.assigned_agent == profile and not project.verifications.filter(agent=profile, decision='APPROVED').exists()
+    can_valuate = project.assigned_agent == profile and project.status == 'APPROVED' and not project.valuations.filter(agent=profile).exists()
     # can_sell: agent-driven path from IN_PROGRESS (they can always record a sale from IN_PROGRESS or READY_FOR_SALE)
     can_sell = project.status in ['IN_PROGRESS', 'READY_FOR_SALE'] and project.assigned_agent == profile
     # farmer_ready: farmer specifically triggered READY_FOR_SALE — show the "go assess with farmer" banner
@@ -686,6 +698,7 @@ def agent_project_detail(request, project_id):
 def agent_verify(request, project_id):
     profile = get_object_or_404(AgentProfile, user=request.user)
     project = get_object_or_404(Project, id=project_id, assigned_agent=profile)
+    verification = project.verifications.filter(agent=profile).first()
 
     if request.method == 'POST':
         decision = request.POST.get('decision', 'PENDING')
@@ -694,22 +707,33 @@ def agent_verify(request, project_id):
         ownership_verified = request.POST.get('ownership_verified') == 'on'
         physical_verified = request.POST.get('physical_verified') == 'on'
 
-        Verification.objects.create(
-            project=project, agent=profile,
-            inspection_date=inspection_date,
-            ownership_verified=ownership_verified,
-            physical_verified=physical_verified,
-            decision=decision, remarks=remarks,
-        )
+        if verification:
+            verification.inspection_date = inspection_date
+            verification.ownership_verified = ownership_verified
+            verification.physical_verified = physical_verified
+            verification.decision = decision
+            verification.remarks = remarks
+            verification.save()
+        else:
+            Verification.objects.create(
+                project=project, agent=profile,
+                inspection_date=inspection_date,
+                ownership_verified=ownership_verified,
+                physical_verified=physical_verified,
+                decision=decision, remarks=remarks,
+            )
+            
         if decision == 'APPROVED':
             project.status = 'APPROVED'
         elif decision == 'REJECTED':
             project.status = 'REJECTED'
+        elif decision == 'PENDING' and project.status == 'REJECTED':
+            project.status = 'VERIFICATION'
         project.save()
         messages.success(request, 'Verification recorded successfully!')
         return redirect('agent_project_detail', project_id=project.id)
 
-    return render(request, 'core/user_pages/agent/verify.html', {'project': project})
+    return render(request, 'core/user_pages/agent/verify.html', {'project': project, 'verification': verification})
 
 
 @role_required('AGENT', 'ADMIN')
