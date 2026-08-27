@@ -268,7 +268,6 @@ def farmer_project_create(request):
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
         funding_required = request.POST.get('funding_required', '')
-        max_investors = request.POST.get('max_investors', 3)
         expected_sale_date = request.POST.get('expected_sale_date') or None
 
         if not all([asset_id, title, description, funding_required]):
@@ -291,7 +290,7 @@ def farmer_project_create(request):
                 project = Project.objects.create(
                     asset=asset, title=title, project_type=project_type,
                     description=description, funding_required=Decimal(funding_required),
-                    max_investors=int(max_investors), expected_sale_date=expected_sale_date,
+                    expected_sale_date=expected_sale_date,
                 )
                 # Handle ownership documents
                 for doc_file in request.FILES.getlist('documents'):
@@ -452,7 +451,6 @@ def investor_browse(request):
             'funded': funded,
             'pct': min(pct, 100),
             'inv_count': inv_count,
-            'slots_left': (p.max_investors or 0) - inv_count if p.max_investors else 99,
         })
 
     ctx = {
@@ -486,8 +484,6 @@ def investor_project_detail(request, project_id):
                 raise ValueError('Insufficient wallet balance.')
             if amount > remaining_funding:
                 raise ValueError(f'You can only invest up to ₹{remaining_funding}.')
-            if project.max_investors and inv_count >= project.max_investors:
-                raise ValueError('This project has reached its maximum number of investors.')
 
             share_pct = (amount / project.funding_required * 100).quantize(Decimal('0.01'))
 
@@ -522,7 +518,6 @@ def investor_project_detail(request, project_id):
         'remaining_funding': remaining_funding,
         'pct': min(pct, 100),
         'wallet': wallet,
-        'slots_left': (project.max_investors or 0) - inv_count if project.max_investors else 99,
         'verifications': project.verifications.filter(decision='APPROVED'),
         'valuations': project.valuations.all(),
         'already_invested': already_invested,
@@ -533,8 +528,21 @@ def investor_project_detail(request, project_id):
 @role_required('INVESTOR')
 def investor_investments(request):
     profile = get_object_or_404(InvestorProfile, user=request.user)
-    investments = Investment.objects.filter(investor=profile).select_related('project__asset__farmer__user').order_by('-invested_at')
-    return render(request, 'core/user_pages/investor/investments.html', {'investments': investments})
+    investments = Investment.objects.filter(investor=profile).select_related(
+        'project__asset__farmer__user'
+    ).order_by('-invested_at')
+
+    # Always fetch wallet transactions so history shows even with no gains
+    wallet, _ = InvestorWallet.objects.get_or_create(investor=profile)
+    transactions = InvestorWalletTransaction.objects.filter(wallet=wallet).select_related(
+        'investment__project'
+    ).order_by('-created_at')
+
+    return render(request, 'core/user_pages/investor/investments.html', {
+        'investments': investments,
+        'transactions': transactions,
+        'wallet': wallet,
+    })
 
 
 @role_required('INVESTOR')

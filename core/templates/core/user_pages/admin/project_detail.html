@@ -80,10 +80,7 @@
             <span class="fw-bold text-primary">₹{{ project.expected_profit|floatformat:0 }}</span>
           </div>
           {% endif %}
-          <div class="list-group-item d-flex justify-content-between align-items-center">
-            <span class="text-muted small">Max Investors</span>
-            <span class="fw-bold">{{ project.max_investors }}</span>
-          </div>
+
           {% if project.expected_sale_date %}
           <div class="list-group-item d-flex justify-content-between align-items-center">
             <span class="text-muted small">Expected Sale</span>

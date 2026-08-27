@@ -261,10 +261,6 @@ class Project(models.Model):
         blank=True
     )
 
-    max_investors = models.PositiveSmallIntegerField(
-        default=3
-    )
-
     status = models.CharField(
         max_length=30,
         choices=STATUS_CHOICES,

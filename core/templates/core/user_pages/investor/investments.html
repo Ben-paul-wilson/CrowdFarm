@@ -1,66 +1,271 @@
 {% extends 'base.html' %}
 {% block title %}My Investments — CrowdFarm{% endblock %}
+
 {% block content %}
-<div class="container py-4">
+<style>
+  :root {
+    --inv-green:  #16a34a;
+    --inv-red:    #dc2626;
+    --inv-blue:   #1d4ed8;
+    --inv-amber:  #d97706;
+    --inv-muted:  #6b7280;
+    --inv-surface:#f9fafb;
+    --inv-card:   #ffffff;
+    --inv-border: #e5e7eb;
+    --inv-radius: 12px;
+    --inv-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+  .stat-card {
+    background: var(--inv-card); border: 1px solid var(--inv-border);
+    border-radius: var(--inv-radius); padding: 1.25rem 1.5rem;
+    box-shadow: var(--inv-shadow); transition: transform .18s, box-shadow .18s;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+  .stat-card .label { font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--inv-muted); }
+  .stat-card .value { font-size: 1.65rem; font-weight: 700; line-height: 1.2; margin-top: .25rem; }
+  .section-heading {
+    font-size: 1.05rem; font-weight: 700; color: #111827;
+    border-left: 4px solid var(--inv-green); padding-left: .75rem; margin-bottom: 1rem;
+  }
+  .inv-table th {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--inv-muted); background: var(--inv-surface);
+    border-bottom: 2px solid var(--inv-border); padding: .75rem 1rem;
+  }
+  .inv-table td { padding: .85rem 1rem; vertical-align: middle; font-size: .88rem; }
+  .inv-table tbody tr { border-bottom: 1px solid #f3f4f6; transition: background .12s; }
+  .inv-table tbody tr:hover { background: #f0fdf4; }
+  .inv-table tbody tr:last-child { border-bottom: none; }
+  .badge-active    { background: #dcfce7; color: #15803d; border-radius: 99px; padding: .2em .7em; font-size: .72rem; font-weight: 600; }
+  .badge-returned  { background: #dbeafe; color: #1d4ed8; border-radius: 99px; padding: .2em .7em; font-size: .72rem; font-weight: 600; }
+  .badge-cancelled { background: #fee2e2; color: #b91c1c; border-radius: 99px; padding: .2em .7em; font-size: .72rem; font-weight: 600; }
+  .tx-row {
+    display: flex; align-items: center; gap: 1rem;
+    padding: .85rem 1.25rem; border-bottom: 1px solid #f3f4f6; transition: background .12s;
+  }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-row:hover { background: #f9fafb; }
+  .tx-icon {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem; flex-shrink: 0;
+  }
+  .tx-icon-deposit    { background: #dcfce7; color: #16a34a; }
+  .tx-icon-investment { background: #fef3c7; color: #d97706; }
+  .tx-icon-return     { background: #dbeafe; color: #1d4ed8; }
+  .tx-icon-withdrawal { background: #fee2e2; color: #dc2626; }
+  .tx-meta { flex: 1; min-width: 0; }
+  .tx-meta .tx-type { font-size: .85rem; font-weight: 600; color: #111827; }
+  .tx-meta .tx-sub  { font-size: .73rem; color: var(--inv-muted); margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-amount { font-size: .95rem; font-weight: 700; white-space: nowrap; }
+  .tx-credit { color: var(--inv-green); }
+  .tx-debit  { color: var(--inv-red); }
+  .tx-date   { font-size: .73rem; color: var(--inv-muted); text-align: right; min-width: 64px; }
+  .empty-state { padding: 3.5rem 1rem; text-align: center; color: var(--inv-muted); }
+  .empty-state i { font-size: 3.5rem; display: block; margin-bottom: .75rem; opacity: .45; }
+  .tx-scroll { max-height: 540px; overflow-y: auto; }
+  .tx-scroll::-webkit-scrollbar { width: 5px; }
+  .tx-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+</style>
+
+<div class="container py-4" style="max-width: 1200px;">
+
+  <!-- Page Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0">My Investments</h2>
-    <a href="{% url 'investor_browse' %}" class="btn btn-success fw-semibold">
-      <i class="ph-plus me-1"></i> Browse New Projects
+    <div>
+      <h2 class="fw-bold mb-0">My Investments</h2>
+      <p class="text-muted small mb-0 mt-1">Full portfolio overview &amp; complete transaction history</p>
+    </div>
+    <a href="{% url 'investor_browse' %}" class="btn btn-success fw-semibold px-4">
+      <i class="ph-plus me-1"></i> Browse Projects
     </a>
   </div>
 
-  {% if investments %}
-  <div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-4">Project</th>
-            <th>Farmer</th>
-            <th>Invested</th>
-            <th>Share %</th>
-            <th>Expected Return</th>
-            <th>Actual Return</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for inv in investments %}
-          <tr>
-            <td class="ps-4">
-              <div class="fw-semibold">
-                <a href="{% url 'investor_project_detail' inv.project.id %}" class="text-decoration-none text-dark">{{ inv.project.title }}</a>
-              </div>
-              <div class="text-muted" style="font-size:0.8rem;">{{ inv.project.get_status_display }}</div>
-            </td>
-            <td class="text-muted small">{{ inv.project.asset.farmer.user.get_full_name|default:"Farmer" }}</td>
-            <td class="fw-bold">₹{{ inv.amount|floatformat:0 }}</td>
-            <td>{{ inv.share_percentage }}%</td>
-            <td>{% if inv.expected_return %}₹{{ inv.expected_return|floatformat:0 }}{% else %}—{% endif %}</td>
-            <td>{% if inv.actual_return %}<span class="text-success fw-bold">₹{{ inv.actual_return|floatformat:0 }}</span>{% else %}—{% endif %}</td>
-            <td>
-              {% if inv.status == 'ACTIVE' %}<span class="badge bg-success">Active</span>
-              {% elif inv.status == 'RETURNED' %}<span class="badge bg-secondary">Returned</span>
-              {% else %}<span class="badge bg-danger">Cancelled</span>{% endif %}
-            </td>
-            <td class="text-muted small">{{ inv.invested_at|date:"d M Y" }}</td>
-            <td>
-              <a href="{% url 'investor_project_detail' inv.project.id %}" class="btn btn-sm btn-outline-primary">View</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- Summary Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="label">Wallet Balance</div>
+        <div class="value" style="color:var(--inv-blue);">₹{{ wallet.balance|floatformat:0 }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="label">Investments</div>
+        <div class="value text-dark">{{ investments|length }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="label">Completed Returns</div>
+        <div class="value" style="color:var(--inv-green);">
+          {% with cnt=0 %}
+            {% for inv in investments %}{% if inv.actual_return %}{% endif %}{% endfor %}
+          {% endwith %}
+          {% for inv in investments %}{% if inv.status == 'RETURNED' %}✓ {% endif %}{% endfor %}
+          {{ investments|length }}
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="label">Transactions</div>
+        <div class="value" style="color:#7c3aed;">{{ transactions|length }}</div>
+      </div>
     </div>
   </div>
-  {% else %}
-  <div class="text-center py-5">
-    <i class="ph-currency-inr text-muted" style="font-size:4rem;"></i>
-    <h5 class="fw-semibold mt-3">No investments yet</h5>
-    <a href="{% url 'investor_browse' %}" class="btn btn-success mt-2">Browse Projects</a>
-  </div>
-  {% endif %}
+
+  <!-- Main Two-Column Layout -->
+  <div class="row g-4">
+
+    <!-- LEFT: Portfolio Table -->
+    <div class="col-lg-7">
+      <div class="section-heading">Portfolio</div>
+      <div class="card border-0 shadow-sm" style="border-radius: var(--inv-radius); overflow: hidden;">
+        {% if investments %}
+        <div class="table-responsive">
+          <table class="table inv-table mb-0">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Invested</th>
+                <th>Share</th>
+                <th>Expected</th>
+                <th>Actual Return</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inv in investments %}
+              <tr>
+                <td>
+                  <a href="{% url 'investor_project_detail' inv.project.id %}"
+                     class="fw-semibold text-decoration-none text-dark d-block"
+                     style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    {{ inv.project.title }}
+                  </a>
+                  <span class="text-muted" style="font-size:.72rem;">
+                    {{ inv.project.asset.farmer.user.get_full_name|default:"Farmer" }} &middot;
+                    {{ inv.invested_at|date:"d M Y" }}
+                  </span>
+                </td>
+                <td class="fw-bold">₹{{ inv.amount|floatformat:0 }}</td>
+                <td>{{ inv.share_percentage }}%</td>
+                <td class="text-muted">
+                  {% if inv.expected_return %}₹{{ inv.expected_return|floatformat:0 }}{% else %}<span style="opacity:.45;">—</span>{% endif %}
+                </td>
+                <td>
+                  {% if inv.actual_return %}
+                    <span class="fw-bold" style="color:var(--inv-green);">₹{{ inv.actual_return|floatformat:0 }}</span>
+                  {% else %}
+                    <span style="font-size:.78rem; color:#9ca3af; font-style:italic;">Not yet paid</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if inv.status == 'ACTIVE' %}<span class="badge-active">Active</span>
+                  {% elif inv.status == 'RETURNED' %}<span class="badge-returned">Returned</span>
+                  {% else %}<span class="badge-cancelled">Cancelled</span>{% endif %}
+                </td>
+                <td>
+                  <a href="{% url 'investor_project_detail' inv.project.id %}"
+                     class="btn btn-sm btn-outline-primary px-3" style="font-size:.75rem;">View</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="ph-plant"></i>
+          <h6 class="fw-semibold">No investments yet</h6>
+          <p class="small mb-3">Start growing your money by investing in a farming project.</p>
+          <a href="{% url 'investor_browse' %}" class="btn btn-success btn-sm px-4">Browse Projects</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: Transaction History (always shown) -->
+    <div class="col-lg-5">
+      <div class="section-heading">Transaction History</div>
+      <div class="card border-0 shadow-sm" style="border-radius: var(--inv-radius); overflow: hidden;">
+
+        <!-- Header with count -->
+        <div class="d-flex align-items-center justify-content-between px-4 py-3"
+             style="border-bottom: 1px solid var(--inv-border);">
+          <span class="fw-semibold" style="font-size:.9rem; color:#111827;">All Transactions</span>
+          <span class="badge rounded-pill bg-light text-muted border" style="font-size:.72rem;">
+            {{ transactions|length }} record{% if transactions|length != 1 %}s{% endif %}
+          </span>
+        </div>
+
+        <!-- Scrollable list — always rendered -->
+        <div class="tx-scroll">
+          {% if transactions %}
+            {% for tx in transactions %}
+            <div class="tx-row">
+              <!-- Icon -->
+              <div class="tx-icon
+                {% if tx.transaction_type == 'DEPOSIT' %}tx-icon-deposit
+                {% elif tx.transaction_type == 'INVESTMENT' %}tx-icon-investment
+                {% elif tx.transaction_type == 'RETURN' %}tx-icon-return
+                {% else %}tx-icon-withdrawal{% endif %}">
+                {% if tx.transaction_type == 'DEPOSIT' %}<i class="ph-arrow-circle-down"></i>
+                {% elif tx.transaction_type == 'INVESTMENT' %}<i class="ph-currency-inr"></i>
+                {% elif tx.transaction_type == 'RETURN' %}<i class="ph-arrow-circle-up-right"></i>
+                {% else %}<i class="ph-bank"></i>{% endif %}
+              </div>
+              <!-- Label -->
+              <div class="tx-meta">
+                <div class="tx-type">{{ tx.get_transaction_type_display }}</div>
+                <div class="tx-sub">
+                  {% if tx.investment and tx.investment.project %}{{ tx.investment.project.title }}
+                  {% elif tx.description %}{{ tx.description }}
+                  {% else %}Wallet transaction{% endif %}
+                </div>
+              </div>
+              <!-- Amount -->
+              <div class="tx-amount {% if tx.transaction_type == 'INVESTMENT' or tx.transaction_type == 'WITHDRAWAL' %}tx-debit{% else %}tx-credit{% endif %}">
+                {% if tx.transaction_type == 'INVESTMENT' or tx.transaction_type == 'WITHDRAWAL' %}&minus;{% else %}+{% endif %}₹{{ tx.amount|floatformat:2 }}
+              </div>
+              <!-- Date -->
+              <div class="tx-date">
+                {{ tx.created_at|date:"d M" }}<br>
+                <span style="font-size:.68rem;">{{ tx.created_at|date:"Y" }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <!-- Zero-state: always rendered even with no transactions -->
+            <div class="empty-state">
+              <i class="ph-receipt"></i>
+              <h6 class="fw-semibold mb-1">No transactions yet</h6>
+              <p class="small mb-0 px-3">
+                Your complete history of deposits, investments, returns and withdrawals
+                will appear here — even before any gains are applied.
+              </p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Legend — always shown -->
+        <div class="px-4 py-3" style="border-top: 1px solid var(--inv-border); background: var(--inv-surface);">
+          <div class="d-flex flex-wrap gap-3" style="font-size: .72rem; color: var(--inv-muted);">
+            <span><span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#16a34a;"></span>Deposit</span>
+            <span><span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#d97706;"></span>Investment</span>
+            <span><span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#1d4ed8;"></span>Return</span>
+            <span><span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:#dc2626;"></span>Withdrawal</span>
+          </div>
+        </div>
+
+      </div><!-- /card -->
+    </div><!-- /col -->
+
+  </div><!-- /row -->
 </div>
 {% endblock %}
+
+
+
