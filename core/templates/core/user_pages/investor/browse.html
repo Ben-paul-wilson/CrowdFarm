@@ -109,9 +109,15 @@
                 View Details
               </a>
               {% elif user.role == 'FARMER' %}
-              <a href="{% url 'farmer_project_detail' p.id %}" class="btn btn-primary fw-semibold mb-3">
-                View Details
-              </a>
+                {% if p.asset.farmer.user == user %}
+                <a href="{% url 'farmer_project_detail' p.id %}" class="btn btn-primary fw-semibold mb-3">
+                  Manage Project
+                </a>
+                {% else %}
+                <button class="btn btn-outline-secondary fw-semibold mb-3" disabled title="You can only manage your own projects">
+                  Other Farmer's Project
+                </button>
+                {% endif %}
               {% endif %}
             {% else %}
             <a href="{% url 'login' %}" class="btn btn-outline-success fw-semibold mb-3">Login to Invest</a>

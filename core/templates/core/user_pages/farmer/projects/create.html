@@ -63,12 +63,13 @@
         <hr class="my-4">
         <h6 class="fw-bold text-uppercase text-muted small mb-3">Ownership Documents</h6>
         <div class="mb-3">
-          <label class="form-label fw-semibold" for="docType">Document Type</label>
+          <label class="form-label fw-semibold" for="docType">Document Type *</label>
           <input type="text" id="docType" name="document_type" class="form-control"
             placeholder="e.g. Land Registry, Patta, Kisan Credit Card" value="{{ post.document_type|default:'Ownership Proof' }}">
+            <div class="form-text text-muted">Type of document submitting for asset authentication</div>
         </div>
         <div class="mb-4">
-          <label class="form-label fw-semibold" for="docFiles">Upload Documents</label>
+          <label class="form-label fw-semibold" for="docFiles">Upload Documents *</label>
           <input type="file" id="docFiles" name="documents" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png">
           <div class="form-text text-muted">You can upload multiple files (PDF, JPG, PNG). Max 10MB each.</div>
         </div>

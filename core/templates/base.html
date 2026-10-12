@@ -158,9 +158,11 @@
 								<i class="ph-wallet me-2"></i> My Wallet
 							</a>
 							{% endif %}
+							{% if user.role != 'AGENT' %}
 							<a class="dropdown-item" href="{% url 'bank_accounts' %}">
 								<i class="ph-bank me-2"></i> Bank Accounts
 							</a>
+							{% endif %}
 
 							{% if user.is_staff or user.role == 'ADMIN' or user.is_superuser %}
 							<div class="dropdown-divider"></div>

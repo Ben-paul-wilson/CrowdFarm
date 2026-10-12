@@ -28,7 +28,7 @@
         <div class="mb-3">
           <label class="form-label fw-semibold" for="accNum">Account Number *</label>
           <input type="text" id="accNum" name="account_number" class="form-control"
-            placeholder="Your bank account number" value="{{ post.account_number|default:'' }}" required>
+            placeholder="Your bank account number" value="{{ post.account_number|default:'' }}" required maxlength="17">
         </div>
 
         <div class="row g-3 mb-3">

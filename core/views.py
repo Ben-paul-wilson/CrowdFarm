@@ -309,7 +309,14 @@ def farmer_project_create(request):
 @role_required('FARMER')
 def farmer_project_detail(request, project_id):
     profile = get_object_or_404(FarmerProfile, user=request.user)
-    project = get_object_or_404(Project, id=project_id, asset__farmer=profile)
+    try:
+        project = Project.objects.get(id=project_id, asset__farmer=profile)
+    except Project.DoesNotExist:
+        if Project.objects.filter(id=project_id).exists():
+            messages.error(request, "You can only view and manage your own projects.")
+        else:
+            messages.error(request, "Project not found.")
+        return redirect('farmer_project_list')
     investments = Investment.objects.filter(project=project)
     total_funded = investments.aggregate(t=Sum('amount'))['t'] or Decimal('0')
     funding_pct = int((total_funded / project.funding_required * 100)) if project.funding_required else 0
@@ -579,13 +586,13 @@ def investor_wallet(request):
 # SHARED: BANK ACCOUNTS
 # ─────────────────────────────────────────────
 
-@login_required
+@role_required('FARMER', 'INVESTOR', 'ADMIN')
 def bank_accounts(request):
     accounts = BankAccount.objects.filter(user=request.user)
     return render(request, 'core/user_pages/shared/bank_accounts.html', {'accounts': accounts})
 
 
-@login_required
+@role_required('FARMER', 'INVESTOR', 'ADMIN')
 def bank_account_add(request):
     if request.method == 'POST':
         holder = request.POST.get('account_holder_name', '').strip()
@@ -617,7 +624,7 @@ def bank_account_add(request):
     return render(request, 'core/user_pages/shared/bank_account_add.html')
 
 
-@login_required
+@role_required('FARMER', 'INVESTOR', 'ADMIN')
 def bank_account_delete(request, account_id):
     account = get_object_or_404(BankAccount, id=account_id, user=request.user)
     account.delete()
