@@ -5,7 +5,7 @@
 
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h2 class="fw-bold mb-0">🛡️ Agent Dashboard</h2>
+      <h2 class="fw-bold mb-0">Agent Dashboard</h2>
       <p class="text-muted mb-0">{{ profile.designation }} · EMP ID: {{ profile.employee_id }}</p>
     </div>
     <a href="{% url 'agent_pending_projects' %}" class="btn btn-warning fw-semibold text-dark">
@@ -18,7 +18,9 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:56px;height:56px;">
+          <div
+            class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+            style="width:56px;height:56px;">
             <i class="ph-clock text-warning fs-3"></i>
           </div>
           <div>
@@ -31,7 +33,9 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:56px;height:56px;">
+          <div
+            class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+            style="width:56px;height:56px;">
             <i class="ph-clipboard-text text-primary fs-3"></i>
           </div>
           <div>
@@ -44,7 +48,9 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:56px;height:56px;">
+          <div
+            class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+            style="width:56px;height:56px;">
             <i class="ph-shield-check text-success fs-3"></i>
           </div>
           <div>
@@ -57,7 +63,9 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body d-flex align-items-center gap-3">
-          <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:56px;height:56px;">
+          <div
+            class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+            style="width:56px;height:56px;">
             <i class="ph-receipt text-info fs-3"></i>
           </div>
           <div>
@@ -103,7 +111,8 @@
                 {% else %}<span class="badge bg-light text-dark">{{ p.get_status_display }}</span>{% endif %}
               </td>
               <td>₹{{ p.funding_required|floatformat:0 }}</td>
-              <td><a href="{% url 'agent_project_detail' p.id %}" class="btn btn-sm btn-outline-secondary">Manage</a></td>
+              <td><a href="{% url 'agent_project_detail' p.id %}" class="btn btn-sm btn-outline-secondary">Manage</a>
+              </td>
             </tr>
             {% endfor %}
           </tbody>
